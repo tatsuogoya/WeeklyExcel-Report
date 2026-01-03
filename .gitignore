@@ -1,0 +1,13 @@
+# Exclude Data and Output Files (Privacy)
+*.xlsx
+*.xls
+Weekly_Report_*.xlsx
+NA Daily work.xlsx
+
+# Exclude System Files
+__pycache__/
+*.pyc
+.venv/
+venv/
+.idea/
+.vscode/
