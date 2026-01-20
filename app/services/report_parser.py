@@ -104,36 +104,21 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
     new_users_df = pd.DataFrame()
     if "New Users" in all_sheets:
         new_users_raw = all_sheets["New Users"]
-        # Use first row as header if headers aren't set
+        
         if len(new_users_raw) > 0:
-            # Check if first row looks like data or headers
-            # If first row has mostly non-null values and second row exists, use first row as header
-            if new_users_raw.iloc[0].notna().sum() > 0:
-                new_users_df = new_users_raw.copy()
+            # Check if columns are "Unnamed: X" format
+            if any("Unnamed" in str(col) for col in new_users_raw.columns):
+                # First row contains the actual headers
+                # Use it as the new column names
+                new_header = new_users_raw.iloc[0].to_dict()
+                new_users_raw = new_users_raw.rename(columns=new_header)
+                # Skip the first row (which was the header row)
+                new_users_df = new_users_raw.iloc[1:].copy()
             else:
                 new_users_df = new_users_raw.copy()
             
-            # Clean up column names
+            # Clean up column names (strip whitespace)
             new_users_df.columns = [str(c).strip() for c in new_users_df.columns]
-            
-            # Rename columns to remove "Unnamed" prefixes and use the actual column values if they exist
-            # First, check if the first row contains the actual headers
-            if "Unnamed: 1" in new_users_df.columns:
-                # This means columns weren't read properly - use the first data row as headers
-                new_header = {}
-                for col in new_users_df.columns:
-                    if col.startswith("Unnamed"):
-                        # Get the first value in this column as the header name
-                        first_val = new_users_df[col].iloc[0]
-                        if pd.notna(first_val):
-                            new_header[col] = str(first_val).strip()
-                        else:
-                            new_header[col] = col
-                    else:
-                        new_header[col] = col
-                new_users_df = new_users_df.rename(columns=new_header)
-                # Skip the first row since it's now headers
-                new_users_df = new_users_df.iloc[1:].reset_index(drop=True)
             
             # Ensure Date Created is datetime
             if "Date Created" in new_users_df.columns:
@@ -141,6 +126,7 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
             
             # Remove empty rows
             new_users_df = new_users_df.dropna(how='all')
+            new_users_df = new_users_df.reset_index(drop=True)
     
     return {
         "left_df": left_df,
