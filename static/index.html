@@ -552,6 +552,14 @@
         function renderTable(id, rows, cols, boldTicketNos = new Set()) {
             const tbody = document.querySelector(`#${id} tbody`);
             tbody.innerHTML = '';
+            
+            // Debug: log columns we're looking for
+            if (id === 'newUsersTable' && rows.length > 0) {
+                console.log('New Users - Looking for columns:', cols);
+                console.log('New Users - First row keys:', Object.keys(rows[0]));
+                console.log('New Users - First row data:', rows[0]);
+            }
+            
             rows.forEach(row => {
                 const tr = document.createElement('tr');
                 // Check both 'Ticket No.' and 'Ticket No' for compatibility
