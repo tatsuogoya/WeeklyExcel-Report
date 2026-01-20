@@ -45,29 +45,38 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
 
     # 2. Section Partitioning Rules
     full_df = pd.concat(valid_dfs.values(), ignore_index=True)
-    mask_range = (full_df["Date"].dt.date >= begin_date) & (full_df["Date"].dt.date <= end_date)
-    range_df = full_df[mask_range].copy()
+    
+    # For date range filtering
+    mask_range_date = (full_df["Date"].dt.date >= begin_date) & (full_df["Date"].dt.date <= end_date)
+    mask_range_close = (full_df["Time - Close"].dt.date >= begin_date) & (full_df["Time - Close"].dt.date <= end_date)
     
     # Summary Counts Rules
-    range_status = range_df["Status"].astype(str).str.strip().str.upper()
-    open_count = int((range_status == "OPEN").sum())
-    closed_count = int((range_status == "CLOSE").sum())
+    # open_count: All OPEN tickets regardless of date
+    # closed_count: CLOSED tickets where "Time - Close" falls within the selected date range
+    all_open = full_df[full_df["Status"] == "OPEN"]
+    open_count = int(len(all_open))
+    
+    closed_in_range = full_df[(full_df["Status"] == "CLOSE") & mask_range_close]
+    closed_count = int(len(closed_in_range))
 
-    # Left Section Rules
-    left_df = range_df[range_df["Status"] == "OPEN"].copy()
+    # Left Section Rules: All OPEN tickets regardless of date
+    left_df = full_df[full_df["Status"] == "OPEN"].copy()
     if left_df.empty:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error_code": "NO_ROWS_IN_RANGE", "message": f"No activity found between {begin_date} and {end_date}"}
+            detail={"error_code": "NO_OPEN_TICKETS", "message": "No OPEN tickets found"}
         )
     left_df = left_df.sort_values(by=["Time - Arrive", "Ticket No."], ascending=[True, True])
 
-    # Right Section Rules
-    right_df = range_df[range_df["Status"].isin(["OPEN", "CLOSE"])].copy()
+    # Right Section Rules: All OPEN tickets + CLOSED tickets where "Time - Close" is in date range
+    open_all = full_df[full_df["Status"] == "OPEN"].copy()
+    closed_range = full_df[(full_df["Status"] == "CLOSE") & mask_range_close].copy()
+    right_df = pd.concat([open_all, closed_range], ignore_index=True) if not closed_range.empty else open_all.copy()
+    
     if right_df.empty:
          raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error_code": "NO_RIGHT_TICKETS", "message": f"No OPEN or CLOSE tickets found between {begin_date} and {end_date}"}
+            detail={"error_code": "NO_RIGHT_TICKETS", "message": "No OPEN or CLOSED tickets found"}
         )
     right_df = right_df.sort_values(by=["Status", "Time - Arrive", "Ticket No."], ascending=[False, True, True])
 
