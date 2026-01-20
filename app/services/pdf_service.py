@@ -21,8 +21,8 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
         ("PIC", "Assign To"), ("Received", "Time - Arrive"), ("Resolved", "Time - Close")
     ]
     NEW_USERS_COLUMNS = [
-        ("Date", "Date"), ("Ticket #", "Ticket No."), ("User", "Request Detail"), 
-        ("Status", "Status"), ("Department", "Requested for")
+        ("Ticket No", "Ticket No"), ("Date Created", "Date Created"), ("User Name", "User Name"), 
+        ("Function / Department", "Function / Department"), ("Email address", "Email address")
     ]
 
     def format_val(val):
@@ -74,7 +74,7 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
         sections.append({
             "title": "New Users",
             "data": prepare_table_data(new_users_df, NEW_USERS_COLUMNS),
-            "widths": [1.0*inch, 1.2*inch, 4.5*inch, 0.8*inch, 1.5*inch],
+            "widths": [1.2*inch, 1.0*inch, 2.0*inch, 1.5*inch, 2.3*inch],
             "empty_msg": "No new users found."
         })
 

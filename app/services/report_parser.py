@@ -101,10 +101,17 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
     right_df = right_df.sort_values(by=["Status", "Time - Arrive", "Ticket No."], ascending=[False, True, True])
 
     # 4. New Users Section (no date filtering, show all)
-    new_users_df = pd.DataFrame(columns=REQUIRED_COLUMNS)
+    new_users_df = pd.DataFrame()
     if "New Users" in all_sheets:
         new_users_raw = all_sheets["New Users"]
-        new_users_df = normalize_df(new_users_raw)
+        # New Users has its own unique columns - just clean them up
+        new_users_df = new_users_raw.copy()
+        new_users_df.columns = [str(c).strip() for c in new_users_df.columns]
+        # Ensure Date Created is datetime
+        if "Date Created" in new_users_df.columns:
+            new_users_df["Date Created"] = pd.to_datetime(new_users_df["Date Created"], errors='coerce')
+        # Remove empty rows
+        new_users_df = new_users_df.dropna(how='all')
     
     return {
         "left_df": left_df,
