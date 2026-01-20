@@ -17,6 +17,7 @@ view the report on a web page, and download it as a **PDF**.
 - Begin Date / End Date selection
 - Weekly report displayed on screen
 - PDF download
+- Excel export (Legacy support)
 - Clear validation and error messages
 
 ---
@@ -71,7 +72,7 @@ view the report on a web page, and download it as a **PDF**.
 
 ---
 
-### Weekly Workload Details
+### Weekly Workload Details (Right Section)
 - Date is within period
 - Status = OPEN or CLOSED
 - Columns: Ticket #, REQ No., Type, Description, Requested for, PIC, Received, Resolved
@@ -82,8 +83,8 @@ view the report on a web page, and download it as a **PDF**.
 
 ### Web Screen
 - Summary
-- Weekly Activity table
-- Open Tickets Backlog table
+- Weekly Activity table (Date Range Based)
+- Weekly Workload Details table
 
 ### PDF
 - Same content as web screen
@@ -104,7 +105,6 @@ view the report on a web page, and download it as a **PDF**.
 
 - Monthly reports
 - Authentication
-- Excel output
 - Background processing
 
 ---
@@ -112,4 +112,4 @@ view the report on a web page, and download it as a **PDF**.
 ## Status
 
 This repository is under active development.
-The current version targets **FastAPI Web + PDF output (MVP)**.
+The current version targets **Professional Web Dashboard + PDF/Excel output (V2)**.

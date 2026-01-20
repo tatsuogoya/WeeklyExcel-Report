@@ -9,7 +9,10 @@ The output is:
 - Displayed on a **web screen**
 - Downloadable as a **PDF**
 
-Excel output is **not used** in MVP.
+The output is:
+1. Displayed on a **professional web dashboard** (with real-time sorting and branding)
+2. Downloadable as a **consistent business PDF**
+3. Exportable to **Excel** (Legacy template support)
 
 ---
 
@@ -102,22 +105,15 @@ Rules:
 
 ---
 
-### 6.2 Left Section – Weekly Activity
+### 6.2 Weekly Workload Details (Activity)
 
 **Purpose**
 - Show what happened during the selected period
 
 **Selection Rules**
 - `begin_date <= Date <= end_date`
-- Status = "OPEN" only
 
-**Sorting**
-- Received (Time - Arrive) ascending
-- Ticket No. ascending
-
----
-
-### 6.3 Right Section – Open Tickets Backlog
+### 6.3 Right Section – Weekly Workload Details
 
 **Purpose**
 - Show current unresolved tickets
@@ -131,7 +127,7 @@ Rules:
 
 **Selection Rules**
 - `begin_date <= Date <= end_date`
-- Status = "OPEN" or "CLOSED"
+- Status = "OPEN" or "CLOSED" (Filtered by Date Range and Year Context)
 
 **Sorting**
 - Received (Time - Arrive) ascending
@@ -169,7 +165,7 @@ Optional (display/debug):
 ### Content
 - Summary section
 - Weekly Activity table
-- Open Tickets Backlog table
+- Weekly Workload Details table
 
 ---
 
@@ -209,7 +205,16 @@ PDF tests are lightweight:
 
 ---
 
-## 11. Repository Structure (Planned)
+---
+
+## 11. Visual Identity (Professional UI)
+
+- **Typography**: Inter (Google Fonts) for modern readability.
+- **Palette**: Dodger Blue, Amber-Gold, and Emerald Green highlights.
+- **Branding**: Professional logo integration with balanced typography.
+- **Interactions**: Smooth CSS transitions and fade-in animations.
+
+## 12. Repository Structure (Current)
 /app
 /api
 /services

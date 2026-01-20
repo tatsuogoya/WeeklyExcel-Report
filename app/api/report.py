@@ -4,7 +4,7 @@ from datetime import date
 import shutil
 import os
 from tempfile import NamedTemporaryFile
-from app.services.weekly_report import get_weekly_report_data
+from app.services.report_orchestrator import get_weekly_report_data
 
 router = APIRouter()
 
@@ -90,8 +90,8 @@ async def generate_pdf_report(
         data = get_weekly_report_data(tmp_path, begin_dt, end_dt)
         
         # We need a PDF generation service
-        from app.services.pdf_generator import generate_pdf
-        output_pdf_path = generate_pdf(data, begin_dt, end_dt)
+        from app.services.pdf_service import generate_pdf_service
+        output_pdf_path = generate_pdf_service(data, begin_dt, end_dt)
 
         filename = f"alphast_SNOW_report_{end_date.replace('-', '_')}.pdf"
         return FileResponse(
