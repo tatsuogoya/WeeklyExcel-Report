@@ -389,6 +389,22 @@
                 <tbody></tbody>
             </table>
         </div>
+
+        <div class="section-title">New Users</div>
+        <div class="table-container">
+            <table id="newUsersTable">
+                <thead>
+                    <tr>
+                        <th onclick="handleSort('newUsersTable', 'Ticket No')">Ticket No</th>
+                        <th onclick="handleSort('newUsersTable', 'Date Created')">Date Created</th>
+                        <th onclick="handleSort('newUsersTable', 'User Name')">User Name</th>
+                        <th onclick="handleSort('newUsersTable', 'Function / Department')">Department</th>
+                        <th onclick="handleSort('newUsersTable', 'Email address')">Email</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -480,9 +496,11 @@
 
             const leftCols = ['Ticket No.', 'Request Detail', 'Remarks'];
             const rightCols = ['Ticket No.', 'Status', 'REQ No.', 'Type', 'Request Detail', 'Requested for', 'Assign To', 'Time - Arrive', 'Time - Close'];
+            const newUsersCols = ['Ticket No', 'Date Created', 'User Name', 'Function / Department', 'Email address'];
 
             renderTable('leftTable', currentData.left_section, leftCols, leftTicketNos);
             renderTable('rightTable', currentData.right_section, rightCols, leftTicketNos);
+            renderTable('newUsersTable', currentData.new_users_section || [], newUsersCols);
         }
 
         function handleSort(tableId, colName) {
@@ -494,13 +512,13 @@
                 state.asc = true;
             }
 
-            const dataKey = tableId === 'leftTable' ? 'left_section' : 'right_section';
+            const dataKey = tableId === 'leftTable' ? 'left_section' : tableId === 'rightTable' ? 'right_section' : 'new_users_section';
             currentData[dataKey].sort((a, b) => {
                 let valA = a[colName] || '';
                 let valB = b[colName] || '';
 
                 // Date handling for sorting
-                if (colName.includes('Time') || colName === 'Date') {
+                if (colName.includes('Time') || colName.includes('Date') || colName === 'Date Created') {
                     valA = valA ? new Date(valA) : new Date(0);
                     valB = valB ? new Date(valB) : new Date(0);
                 }
