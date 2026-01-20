@@ -253,24 +253,27 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.875rem;
+            font-size: 0.8125rem;
+            /* Slightly smaller for more content */
             text-align: left;
         }
 
         th {
             background: #f8fafc;
-            padding: 1rem 0.75rem;
+            padding: 0.875rem 0.625rem;
+            /* Slightly reduced padding */
             font-weight: 600;
             color: var(--text-light);
             text-transform: uppercase;
-            font-size: 0.75rem;
+            font-size: 0.6875rem;
             letter-spacing: 0.05em;
             border-bottom: 2px solid var(--border);
             white-space: nowrap;
         }
 
         td {
-            padding: 1rem 0.75rem;
+            padding: 0.875rem 0.625rem;
+            /* Slightly reduced padding */
             border-bottom: 1px solid var(--border);
             color: var(--text);
             line-height: 1.6;
@@ -340,7 +343,18 @@
                 <label for="file">NA Daily work.xlsx</label>
                 <input type="file" id="file" name="file" accept=".xlsx" required>
             </div>
-            <div class="form-group" style="display:flex; gap:1rem;">
+
+            <div class="form-group">
+                <label for="report_type">Report Type</label>
+                <select id="report_type" name="report_type"
+                    style="width: 100%; padding: 0.75rem; border-radius: 0.625rem; border: 1px solid var(--border); font-family: inherit; font-size: 0.9375rem;">
+                    <option value="weekly">Weekly Report</option>
+                    <option value="monthly" disabled>Monthly Report (Coming Soon)</option>
+                </select>
+            </div>
+
+            <!-- Weekly date range (shown by default) -->
+            <div id="weeklyDateRange" class="form-group" style="display:flex; gap:1rem;">
                 <div style="flex:1">
                     <label for="begin_date">Begin Date</label>
                     <input type="date" id="begin_date" name="begin_date" required>
@@ -350,6 +364,34 @@
                     <input type="date" id="end_date" name="end_date" required>
                 </div>
             </div>
+
+            <!-- Monthly date range (hidden by default) -->
+            <div id="monthlyDateRange" class="form-group" style="display:none; gap:1rem;">
+                <div style="flex:1">
+                    <label for="report_month">Month</label>
+                    <select id="report_month" name="report_month"
+                        style="width: 100%; padding: 0.75rem; border-radius: 0.625rem; border: 1px solid var(--border); font-family: inherit; font-size: 0.9375rem;">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div style="flex:1">
+                    <label for="report_year">Year</label>
+                    <input type="number" id="report_year" name="report_year" min="2020" max="2030" value="2026"
+                        style="width: 100%; padding: 0.75rem; border-radius: 0.625rem; border: 1px solid var(--border); font-family: inherit; font-size: 0.9375rem;">
+                </div>
+            </div>
+
             <div class="actions">
                 <button type="submit" id="genBtn" class="btn-primary">Generate Web View</button>
                 <button type="button" id="pdfBtn" class="btn-secondary" disabled>Download PDF</button>
@@ -421,6 +463,27 @@
             rightTable: { col: null, asc: true },
             newUsersTable: { col: null, asc: true }
         };
+
+        // Report type toggle logic
+        const reportType = document.getElementById('report_type');
+        const weeklyDateRange = document.getElementById('weeklyDateRange');
+        const monthlyDateRange = document.getElementById('monthlyDateRange');
+
+        reportType.addEventListener('change', () => {
+            if (reportType.value === 'monthly') {
+                weeklyDateRange.style.display = 'none';
+                monthlyDateRange.style.display = 'flex';
+                // Disable weekly date inputs
+                document.getElementById('begin_date').removeAttribute('required');
+                document.getElementById('end_date').removeAttribute('required');
+            } else {
+                weeklyDateRange.style.display = 'flex';
+                monthlyDateRange.style.display = 'none';
+                // Re-enable weekly date inputs
+                document.getElementById('begin_date').setAttribute('required', 'required');
+                document.getElementById('end_date').setAttribute('required', 'required');
+            }
+        });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -512,19 +575,14 @@
             // Auto-detect columns from data if available
             if (newUsersData.length > 0) {
                 const firstRow = newUsersData[0];
-                // Get all keys that aren't empty/nan
-                newUsersCols = Object.keys(firstRow).filter(k => k && k !== '' && k.toLowerCase() !== 'nan');
+                // Get all keys that aren't empty/nan/internal flags
+                newUsersCols = Object.keys(firstRow).filter(k =>
+                    k && k !== '' && k.toLowerCase() !== 'nan' && k !== 'is_new_user'
+                );
                 console.log('Detected New Users columns:', newUsersCols);
             }
 
-            // Sort by Date Created descending (newest first)
-            if (newUsersData.length > 0) {
-                newUsersData.sort((a, b) => {
-                    const dateA = a['Date Created'] ? new Date(a['Date Created']) : new Date(0);
-                    const dateB = b['Date Created'] ? new Date(b['Date Created']) : new Date(0);
-                    return dateB - dateA; // Descending
-                });
-            }
+            // Note: Sorting is now handled by the Backend (Service Layer)
 
             // Dynamic header generation for New Users table
             const newUsersHead = document.getElementById('newUsersTableHead');
@@ -536,11 +594,7 @@
 
             renderTable('leftTable', currentData.left_section, leftCols, leftTicketNos);
             renderTable('rightTable', currentData.right_section, rightCols, leftTicketNos);
-
-            // Pass date range to New Users table for highlighting
-            const beginDate = new Date(currentData.period.begin + 'T00:00:00');
-            const endDate = new Date(currentData.period.end + 'T23:59:59');
-            renderTable('newUsersTable', newUsersData, newUsersCols, new Set(), { beginDate, endDate });
+            renderTable('newUsersTable', newUsersData, newUsersCols);
         }
 
         function handleSort(tableId, colName) {
@@ -623,7 +677,10 @@
                 }
 
                 // Highlight New Users created within the date range
-                if (dateRange && row['Date Created']) {
+                // Use backend flag if available, otherwise fallback to date check
+                if (row['is_new_user'] === true) {
+                    tr.classList.add('highlight-row');
+                } else if (dateRange && row['Date Created']) {
                     const rowDate = new Date(row['Date Created']);
                     if (rowDate >= dateRange.beginDate && rowDate <= dateRange.endDate) {
                         tr.classList.add('highlight-row');

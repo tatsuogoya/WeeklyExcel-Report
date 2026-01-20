@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import date, datetime
 from typing import Dict, Any
 from fastapi import HTTPException, status
+from app.utils.column_utils import sanitize_column_name
 
 REQUIRED_COLUMNS = [
     "Date", "Ticket No.", "REQ No.", "Type", "Requested for", 
@@ -100,30 +101,15 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
         )
     right_df = right_df.sort_values(by=["Status", "Time - Arrive", "Ticket No."], ascending=[False, True, True])
 
-    # 4. New Users Section (no date filtering, show all)
+    # 4. New Users Section
     new_users_df = pd.DataFrame()
     # Find sheet name case-insensitively
     new_users_sheet_name = next((name for name in all_sheets.keys() if name.lower() == "new users"), None)
     
-    print(f"DEBUG: New Users sheet found: {new_users_sheet_name}")
-    
     if new_users_sheet_name:
         new_users_raw = all_sheets[new_users_sheet_name].copy()
-        print(f"DEBUG: New Users raw shape: {new_users_raw.shape}")
-        print(f"DEBUG: New Users raw columns (first 5): {list(new_users_raw.columns)[:5]}")
         
         if len(new_users_raw) > 0:
-            # Helper to sanitize column names
-            def sanitize_col(col):
-                if pd.isna(col):
-                    return ""
-                s = str(col).strip()
-                if s.lower() == 'nan':
-                    return ""
-                s = s.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
-                s = ' '.join(s.split())  # Normalize multiple spaces
-                return s
-            
             # Check if columns are problematic (Unnamed, NaN, or nan strings)
             cols_are_bad = any(
                 "Unnamed" in str(col) or pd.isna(col) or str(col).lower() == 'nan'
@@ -134,7 +120,6 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
             expected_keywords = ['ticket', 'date', 'user', 'name', 'email', 'department', 'function']
             
             if cols_are_bad:
-                print("DEBUG: Columns are bad, scanning for header row...")
                 # Scan first 10 rows to find a row that looks like headers
                 header_row_idx = None
                 for idx in range(min(10, len(new_users_raw))):
@@ -142,7 +127,6 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
                     matches = sum(1 for kw in expected_keywords if any(kw in val for val in row_values))
                     if matches >= 2:  # At least 2 matching keywords
                         header_row_idx = idx
-                        print(f"DEBUG: Found header row at index {idx}: {list(new_users_raw.iloc[idx])}")
                         break
                 
                 if header_row_idx is not None:
@@ -152,16 +136,14 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
                     # Skip rows up to and including header row
                     new_users_df = new_users_raw.iloc[header_row_idx + 1:].copy()
                 else:
-                    print("DEBUG: Could not find header row, using raw data")
                     new_users_df = new_users_raw.copy()
             else:
                 new_users_df = new_users_raw.copy()
             
-            # Sanitize column names
-            new_users_df.columns = [sanitize_col(c) for c in new_users_df.columns]
+            # Sanitize column names using shared utility
+            new_users_df.columns = [sanitize_column_name(c) for c in new_users_df.columns]
             # Remove empty column names
             new_users_df = new_users_df.loc[:, new_users_df.columns != ""]
-            print(f"DEBUG: New Users sanitized columns: {list(new_users_df.columns)}")
             
             # Map common column name variations to expected names
             column_mapping = {
@@ -179,11 +161,22 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
                 'Date': 'Date Created',
             }
             new_users_df = new_users_df.rename(columns={k: v for k, v in column_mapping.items() if k in new_users_df.columns})
-            print(f"DEBUG: New Users columns after mapping: {list(new_users_df.columns)}")
             
             # Ensure Date Created is datetime
             if "Date Created" in new_users_df.columns:
                 new_users_df["Date Created"] = pd.to_datetime(new_users_df["Date Created"], errors='coerce')
+                
+                # Business Rule: Sort by Date Created descending (newest first)
+                new_users_df = new_users_df.sort_values(by="Date Created", ascending=False, na_position='last')
+                
+                # Business Rule: Add a flag for users created within the requested date range
+                def check_new(row):
+                    dt = row.get("Date Created")
+                    if pd.notna(dt) and hasattr(dt, 'date'):
+                        return begin_date <= dt.date() <= end_date
+                    return False
+                
+                new_users_df["is_new_user"] = new_users_df.apply(check_new, axis=1)
             
             # Remove empty rows (where key columns are all NaN)
             key_cols = [c for c in ['Ticket No', 'User Name', 'Email address'] if c in new_users_df.columns]
@@ -192,11 +185,6 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
             else:
                 new_users_df = new_users_df.dropna(how='all')
             new_users_df = new_users_df.reset_index(drop=True)
-            
-            print(f"DEBUG: New Users final shape: {new_users_df.shape}")
-            print(f"DEBUG: New Users final columns: {list(new_users_df.columns)}")
-            if len(new_users_df) > 0:
-                print(f"DEBUG: New Users first row: {new_users_df.iloc[0].to_dict()}")
     
     return {
         "left_df": left_df,

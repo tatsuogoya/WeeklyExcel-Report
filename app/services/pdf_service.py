@@ -30,17 +30,39 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
         if isinstance(val, (date, pd.Timestamp)): return val.strftime('%m/%d/%Y')
         return str(val)
 
-    def prepare_table_data(df, mapping, bold_keys=None):
+    def prepare_table_data(df, mapping, bold_keys=None, highlight_flag=None):
+        """
+        Unified table data preparation for PDF rendering.
+        
+        Args:
+            df: DataFrame to render
+            mapping: List of (display_name, source_column) tuples
+            bold_keys: Set of ticket numbers to highlight (legacy tickets)
+            highlight_flag: Column name containing boolean flag for highlighting (e.g., 'is_new_user')
+        
+        Returns:
+            List of lists containing Paragraph objects for ReportLab Table
+        """
         bold_keys = bold_keys or set()
-        table_data = [[h for h, _ in mapping]] # Header row
+        table_data = [[h for h, _ in mapping]]  # Header row
+        
         for _, row in df.iterrows():
             line = []
-            is_bold = row.get("Ticket No.") in bold_keys
+            
+            # Determine if row should be highlighted
+            is_bold = False
+            if highlight_flag and highlight_flag in row:
+                is_bold = row[highlight_flag] == True
+            elif row.get("Ticket No.") in bold_keys:
+                is_bold = True
+            
+            # Build row cells
             for _, source_col in mapping:
                 val = format_val(row.get(source_col))
                 para_val = f'<b><font color="dodgerblue">{val}</font></b>' if is_bold else val
                 line.append(Paragraph(para_val, styles['Normal']))
             table_data.append(line)
+        
         return table_data
 
     # Prepare Data Structures
@@ -71,18 +93,25 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
 
     # Add New Users section if data exists
     if not new_users_df.empty:
-        # Sort by Date Created descending (newest first)
-        if "Date Created" in new_users_df.columns:
-            new_users_df = new_users_df.sort_values(by="Date Created", ascending=False, na_position='last')
-        
         # Dynamically detect columns from the DataFrame
-        all_cols = [c for c in new_users_df.columns if c and str(c).lower() != 'nan' and c != '']
+        all_cols = [c for c in new_users_df.columns if c and str(c).lower() != 'nan' and c != '' and c != 'is_new_user']
+        
+        # PDF-specific column header abbreviations for space
+        header_abbreviations = {
+            'Function / Department': 'Func / Dept',
+            'External / Company': 'Ext / Comp',
+            'External/Company': 'Ext / Comp',  # Without space
+            'External Company': 'Ext / Comp',  # Space instead of slash
+        }
         
         # Create dynamic column mapping: (display_name, source_name)
-        dynamic_new_users_cols = [(col, col) for col in all_cols]
+        # Apply abbreviations to display names only
+        dynamic_new_users_cols = [
+            (header_abbreviations.get(col, col), col) for col in all_cols
+        ]
         
-        # Calculate dynamic widths (distribute evenly across page width ~10.8 inches)
-        total_width = 10.8 * inch
+        # Calculate dynamic widths (use more of landscape page width)
+        total_width = 11.0 * inch  # Increased from 10.8 to 11.0 inches
         num_cols = len(dynamic_new_users_cols)
         if num_cols > 0:
             col_width = total_width / num_cols
@@ -90,37 +119,9 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
         else:
             dynamic_widths = []
         
-        # Prepare table data with date range highlighting
-        def prepare_new_users_table(df, mapping, begin_dt, end_dt):
-            table_data = [[h for h, _ in mapping]]  # Header row
-            for _, row in df.iterrows():
-                line = []
-                # Check if this user was created within the date range
-                date_created = row.get("Date Created")
-                is_in_range = False
-                if pd.notna(date_created):
-                    try:
-                        if isinstance(date_created, (date, pd.Timestamp)):
-                            row_date = date_created.date() if hasattr(date_created, 'date') else date_created
-                        else:
-                            row_date = pd.to_datetime(date_created).date()
-                        is_in_range = begin_dt <= row_date <= end_dt
-                    except:
-                        pass
-                
-                for _, source_col in mapping:
-                    val = format_val(row.get(source_col))
-                    if is_in_range:
-                        para_val = f'<b><font color="dodgerblue">{val}</font></b>'
-                    else:
-                        para_val = val
-                    line.append(Paragraph(para_val, styles['Normal']))
-                table_data.append(line)
-            return table_data
-        
         sections.append({
             "title": "New Users",
-            "data": prepare_new_users_table(new_users_df, dynamic_new_users_cols, begin_date, end_date),
+            "data": prepare_table_data(new_users_df, dynamic_new_users_cols, highlight_flag='is_new_user'),
             "widths": dynamic_widths,
             "empty_msg": "No new users found."
         })
