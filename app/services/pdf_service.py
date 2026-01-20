@@ -20,6 +20,10 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
         ("Type", "Type"), ("Description", "Request Detail"), ("Requested for", "Requested for"), 
         ("PIC", "Assign To"), ("Received", "Time - Arrive"), ("Resolved", "Time - Close")
     ]
+    NEW_USERS_COLUMNS = [
+        ("Date", "Date"), ("Ticket #", "Ticket No."), ("User", "Request Detail"), 
+        ("Status", "Status"), ("Department", "Requested for")
+    ]
 
     def format_val(val):
         if pd.isna(val) or val is None: return ""
@@ -42,6 +46,7 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
     # Prepare Data Structures
     left_df = data["left_df"]
     right_df = data["right_df"]
+    new_users_df = data.get("new_users_df", pd.DataFrame())
     left_ticket_nos = set(left_df["Ticket No."].unique()) if not left_df.empty else set()
 
     summary_items = [
@@ -63,6 +68,15 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
             "empty_msg": "No workload details found."
         }
     ]
+
+    # Add New Users section if data exists
+    if not new_users_df.empty:
+        sections.append({
+            "title": "New Users",
+            "data": prepare_table_data(new_users_df, NEW_USERS_COLUMNS),
+            "widths": [1.0*inch, 1.2*inch, 4.5*inch, 0.8*inch, 1.5*inch],
+            "empty_msg": "No new users found."
+        })
 
     # Logo Path (Service uses paths, Infra renders)
     logo_path = os.path.join(os.path.dirname(__file__), "../../static/logo.jpg")

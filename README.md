@@ -36,7 +36,8 @@ view the report on a web page, and download it as a **PDF**.
 ### NA Daily work.xlsx
 
 - Year-based sheets (e.g. `2025`, `2026`)
-- Required columns:
+- Special sheet: `New Users` (optional, shows all records regardless of date filter)
+- Required columns (for year sheets):
 
 | Column |
 |------|
@@ -58,24 +59,31 @@ view the report on a web page, and download it as a **PDF**.
 
 ### Summary (Header)
 - Date range: begin_date ～ end_date
-- open_count: Status = OPEN
-- closed_count: Status = CLOSE
-- All sheets included
+- open_count: All OPEN tickets (any date)
+- closed_count: CLOSE tickets with Time - Close within date range
+- Processes current year + previous year sheets only
 
 ---
 
 ### Weekly Activity (Left Section)
-- Date is within period
-- Status = OPEN only
-- Columns: Ticket #, Description, Remarks
+- All OPEN tickets (no date filtering)
+- Columns: Ticket #, Description
 - Sorted by Received → Ticket No.
 
 ---
 
 ### Weekly Workload Details (Right Section)
-- Date is within period
-- Status = OPEN or CLOSED
-- Columns: Ticket #, REQ No., Type, Description, Requested for, PIC, Received, Resolved
+- All OPEN tickets (any date) + CLOSE tickets with Time - Close in range
+- Columns: Ticket #, Status, REQ No., Type, Description, Requested for, PIC, Received, Resolved
+- Sorted by Status DESC (OPEN before CLOSE), then Received ASC
+
+---
+
+### New Users Section (Optional)
+- All records from the `New Users` sheet (no date filtering)
+- Displays: Date, Ticket #, User, Status, Department
+- Appears at the bottom of web view and PDF
+- Only shown if `New Users` sheet exists
 
 ---
 

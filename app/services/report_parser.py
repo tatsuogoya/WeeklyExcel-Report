@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import date
+from datetime import date, datetime
 from typing import Dict, Any
 from fastapi import HTTPException, status
 
@@ -23,12 +23,31 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
                 df[col] = None
         df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
         df["Time - Arrive"] = pd.to_datetime(df["Time - Arrive"], errors='coerce')
+        df["Time - Close"] = pd.to_datetime(df["Time - Close"], errors='coerce')
         df["Status"] = df["Status"].astype(str).str.strip().str.upper()
         return df
 
-    # 1. Normalize all sheet data
-    valid_dfs = {}
+    # 1. Filter sheets: Only process current year and previous year
+    current_year = datetime.now().year
+    previous_year = current_year - 1
+    allowed_years = {str(current_year), str(previous_year)}
+    
+    filtered_sheets = {}
     for sheet_name, df in all_sheets.items():
+        sheet_str = str(sheet_name).strip()
+        # Only include current year and previous year sheets
+        if sheet_str in allowed_years:
+            filtered_sheets[sheet_name] = df
+    
+    if not filtered_sheets:
+         raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error_code": "NO_YEAR_SHEETS", "message": f"No {previous_year} or {current_year} sheets found in Excel file"}
+        )
+
+    # 2. Normalize sheet data
+    valid_dfs = {}
+    for sheet_name, df in filtered_sheets.items():
         normalized_sheet_name = str(sheet_name).strip()
         df = normalize_df(df)
         if "Date" in df.columns:
@@ -40,15 +59,16 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
     if not valid_dfs:
          raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error_code": "REQUIRED_COLUMNS_MISSING", "message": "No valid data sheets found with required columns"}
+            detail={"error_code": "REQUIRED_COLUMNS_MISSING", "message": "No valid data in 2025 or 2026 sheets"}
         )
 
-    # 2. Section Partitioning Rules
+    # 3. Section Partitioning Rules
     full_df = pd.concat(valid_dfs.values(), ignore_index=True)
     
     # For date range filtering
     mask_range_date = (full_df["Date"].dt.date >= begin_date) & (full_df["Date"].dt.date <= end_date)
-    mask_range_close = (full_df["Time - Close"].dt.date >= begin_date) & (full_df["Time - Close"].dt.date <= end_date)
+    # For Time - Close, need to handle NaN values
+    mask_range_close = (full_df["Time - Close"].notna()) & (full_df["Time - Close"].dt.date >= begin_date) & (full_df["Time - Close"].dt.date <= end_date)
     
     # Summary Counts Rules
     # open_count: All OPEN tickets regardless of date
@@ -80,9 +100,16 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
         )
     right_df = right_df.sort_values(by=["Status", "Time - Arrive", "Ticket No."], ascending=[False, True, True])
 
+    # 4. New Users Section (no date filtering, show all)
+    new_users_df = pd.DataFrame(columns=REQUIRED_COLUMNS)
+    if "New Users" in all_sheets:
+        new_users_raw = all_sheets["New Users"]
+        new_users_df = normalize_df(new_users_raw)
+    
     return {
         "left_df": left_df,
         "right_df": right_df,
+        "new_users_df": new_users_df,
         "summary": {
             "open_count": open_count,
             "closed_count": closed_count

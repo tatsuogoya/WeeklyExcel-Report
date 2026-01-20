@@ -59,6 +59,7 @@ async def generate_json_report(
             "summary": data["summary"],
             "left_section": clean_df(data["left_df"]),
             "right_section": clean_df(data["right_df"]),
+            "new_users_section": clean_df(data["new_users_df"]),
             "period": {
                 "begin": begin_dt.isoformat(),
                 "end": end_dt.isoformat()

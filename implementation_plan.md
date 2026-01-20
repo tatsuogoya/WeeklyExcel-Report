@@ -116,22 +116,41 @@ Rules:
 ### 6.3 Right Section – Weekly Workload Details
 
 **Purpose**
-- Show current unresolved tickets
+- Show current unresolved tickets and recently closed ones
 
 **Year Context**
-- `current_year = end_date.year`
+- `current_year = datetime.now().year`
 - `previous_year = current_year - 1`
 
 **Data Source**
-- Sheets: current_year and previous_year (if exists)
+- Sheets: current_year and previous_year only
 
 **Selection Rules**
-- `begin_date <= Date <= end_date`
-- Status = "OPEN" or "CLOSED" (Filtered by Date Range and Year Context)
+- All OPEN tickets (any date)
+- CLOSE tickets where Time - Close falls within begin_date to end_date
 
 **Sorting**
+- Status DESC (OPEN before CLOSE)
 - Received (Time - Arrive) ascending
 - Ticket No. ascending
+
+---
+
+### 6.4 New Users Section (Optional)
+
+**Purpose**
+- Display newly added users/onboarded staff
+
+**Data Source**
+- Sheet: "New Users" (if exists, optional)
+
+**Selection Rules**
+- All records in the sheet (no date filtering)
+
+**Display**
+- Appears only if "New Users" sheet exists
+- Shows at bottom of web view and PDF
+- Columns: Date, Ticket #, User, Status, Department
 
 ---
 
@@ -163,9 +182,10 @@ Optional (display/debug):
 - Fixed, business-report-style layout
 
 ### Content
-- Summary section
-- Weekly Activity table
-- Weekly Workload Details table
+- Summary section (period, open/closed counts)
+- Weekly Activity table (all OPEN tickets)
+- Weekly Workload Details table (OPEN + CLOSE tickets in range)
+- New Users section (if exists)
 
 ---
 
