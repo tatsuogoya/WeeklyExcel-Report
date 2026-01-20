@@ -472,6 +472,10 @@
         function displayResult() {
             if (!currentData) return;
             resultArea.style.display = 'block';
+            
+            // Debug logging
+            console.log('Current Data:', currentData);
+            console.log('New Users Section:', currentData.new_users_section);
 
             const fmt = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
 
@@ -550,13 +554,17 @@
             tbody.innerHTML = '';
             rows.forEach(row => {
                 const tr = document.createElement('tr');
-                if (boldTicketNos.has(row['Ticket No.'])) {
+                // Check both 'Ticket No.' and 'Ticket No' for compatibility
+                const ticketNo = row['Ticket No.'] || row['Ticket No'];
+                if (boldTicketNos.has(ticketNo)) {
                     tr.classList.add('bold-row');
                 }
                 cols.forEach(col => {
                     const td = document.createElement('td');
-                    let val = row[col] || '';
+                    // Try both with and without dot for column names
+                    let val = row[col] || row[col.replace('.', '')] || '';
                     if (col.includes('Time') && val) val = val.split('T')[0];
+                    if (col.includes('Date') && val && typeof val === 'string' && val.includes('T')) val = val.split('T')[0];
                     td.textContent = val;
                     tr.appendChild(td);
                 });
