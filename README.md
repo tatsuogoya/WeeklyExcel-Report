@@ -1,51 +1,115 @@
-> ⚠️ This repository is under refactoring.
-> The current implementation is transitioning from a CLI-based script (v1)
-> to a FastAPI-based web application (v2).
-> 
-# Excel Weekly Report Generator (MVP)
+# IFS AMS Workload Summary
 
-## Project Overview
-This tool automates the extraction of ticket data from "NA Daily work.xlsx" and generates a formatted "Weekly Report" based on a specified date range.
+## Overview
 
-## Technical Stack
-- Backend: Python (FastAPI)
-- Excel Engine: pandas, openpyxl
+This project generates a **Weekly ServiceNow Report** from daily ticket data
+stored in **NA Daily work.xlsx**.
+
+Users upload an Excel file, select a report period,
+view the report on a web page, and download it as a **PDF**.
+
+---
+
+## Features (MVP)
+
+- Web-based UI
+- Excel upload (`.xlsx`)
+- Begin Date / End Date selection
+- Weekly report displayed on screen
+- PDF download
+- Clear validation and error messages
+
+---
+
+## Tech Stack
+
+- Backend: Python + FastAPI
+- Excel Processing: pandas, openpyxl
+- PDF: reportlab
 - Testing: pytest
 
-## System Architecture
-The application follows a 3-layer architecture:
-- API Layer: FastAPI endpoints, request validation.
-- Service Layer: Data filtering, sorting, and business logic.
-- Infrastructure Layer: Excel I/O using openpyxl.
+---
 
-## Data Mapping
-| Weekly Report | NA Daily work |
-|---|---|
-| ServiceNow Ticket # | Ticket No. |
-| REQ No. | REQ No. |
-| Type | Type |
-| Description | Request Detail |
-| Requested for | Requested for |
-| PIC | Assign To |
-| Received | Time - Arrive |
-| Resolved | Time - Close |
-| Remarks | Remarks |
+## Input File
 
-## Processing Flow
-1. Validate request and input file.
-2. Read target yearly sheet.
-3. Filter by date range.
-4. Sort by Received, then Ticket No.
-5. Write data into Excel template.
+### NA Daily work.xlsx
 
-## Exception Design (MVP)
-- InputPayloadError (400)
-- ExcelSchemaError (400)
-- NoDataWarning (400)
-- SystemError (500)
+- Year-based sheets (e.g. `2025`, `2026`)
+- Required columns:
 
-## Test Plan
-- Normal flow
-- Sorting validation
-- Missing column error
-- Date boundary case
+| Column |
+|------|
+| Date |
+| Ticket No. |
+| REQ No. |
+| Type |
+| Requested for |
+| Assign To |
+| Request Detail |
+| Time - Arrive |
+| Time - Close |
+| Status |
+| Remarks |
+
+---
+
+## Report Logic
+
+### Summary (Header)
+- Date range: begin_date ～ end_date
+- open_count: Status = OPEN
+- closed_count: Status = CLOSE
+- All sheets included
+
+---
+
+### Weekly Activity (Left Section)
+- Date is within period
+- Status = OPEN only
+- Columns: Ticket #, Description, Remarks
+- Sorted by Received → Ticket No.
+
+---
+
+### Weekly Workload Details
+- Date is within period
+- Status = OPEN or CLOSED
+- Columns: Ticket #, REQ No., Type, Description, Requested for, PIC, Received, Resolved
+
+---
+
+## Output
+
+### Web Screen
+- Summary
+- Weekly Activity table
+- Open Tickets Backlog table
+
+### PDF
+- Same content as web screen
+- Business-style layout
+
+---
+
+## Error Handling
+
+- Invalid input → 400
+- Excel schema issues → 400
+- No matching data → 400
+- Unexpected error → 500
+
+---
+
+## Non-Goals
+
+- Monthly reports
+- Authentication
+- Excel output
+- Background processing
+
+---
+
+## Status
+
+This repository is under active development.
+The current version targets **FastAPI Web + PDF output (MVP)**.

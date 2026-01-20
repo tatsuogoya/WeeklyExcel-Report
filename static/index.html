@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFS AMS Workload Summary</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0369a1;
+            /* Sophisticated professional blue */
+            --primary-light: #e0f2fe;
+            --primary-hover: #075985;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.5;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1.25rem;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(8px);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo {
+            max-height: 50px;
+            width: auto;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: right;
+            flex: 1;
+            letter-spacing: -0.025em;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="file"],
+        input[type="date"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.625rem;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 0.9375rem;
+            transition: all 0.2s;
+            background-color: #fcfcfc;
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+            background-color: white;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.875rem;
+            border-radius: 0.625rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            font-size: 0.9375rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--text);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+            box-shadow: var(--shadow);
+        }
+
+        button:disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        #resultArea {
+            width: 100%;
+            max-width: 1600px;
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1.75rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .summary-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .bold-row td {
+            font-weight: 700;
+            color: #2563eb !important;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin: 2.5rem 0 1.25rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 1.5rem;
+            background-color: var(--primary);
+            border-radius: 2px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 1rem 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            line-height: 1.6;
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #f1f5f9;
+        }
+
+        th {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 1.5rem;
+        }
+
+        th::after {
+            content: '↕';
+            position: absolute;
+            right: 0.5rem;
+            opacity: 0.3;
+            font-size: 0.8rem;
+        }
+
+        th.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+
+        th.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+
+        #status {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-top">
+            <img src="/static/logo.jpg" alt="Company Logo" class="logo">
+            <h1>IFS AMS Workload Summary</h1>
+        </div>
+        <div style="text-align: right; font-size: 0.9rem; color: var(--text-light); margin-top: -10px;">For NAFTA
+            Marelli USA</div>
+        <hr style="border: 0; border-top: 3px solid #10b981; margin: 15px 0 20px 0;">
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="file">NA Daily work.xlsx</label>
+                <input type="file" id="file" name="file" accept=".xlsx" required>
+            </div>
+            <div class="form-group" style="display:flex; gap:1rem;">
+                <div style="flex:1">
+                    <label for="begin_date">Begin Date</label>
+                    <input type="date" id="begin_date" name="begin_date" required>
+                </div>
+                <div style="flex:1">
+                    <label for="end_date">End Date</label>
+                    <input type="date" id="end_date" name="end_date" required>
+                </div>
+            </div>
+            <div class="actions">
+                <button type="submit" id="genBtn" class="btn-primary">Generate Web View</button>
+                <button type="button" id="pdfBtn" class="btn-secondary" disabled>Download PDF</button>
+            </div>
+        </form>
+        <div id="status"></div>
+    </div>
+
+    <div id="resultArea">
+        <div class="summary-card" id="summaryBox"></div>
+
+        <div class="section-title">Weekly Activity (Left Section)</div>
+        <div class="table-container">
+            <table id="leftTable">
+                <thead>
+                    <tr>
+                        <th onclick="handleSort('leftTable', 'Ticket No.')">Ticket #</th>
+                        <th onclick="handleSort('leftTable', 'Request Detail')">Description</th>
+                        <th onclick="handleSort('leftTable', 'Remarks')">Remarks</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="section-title">Weekly Workload Details</div>
+        <div class="table-container">
+            <table id="rightTable">
+                <thead>
+                    <tr>
+                        <th onclick="handleSort('rightTable', 'Ticket No.')">Ticket #</th>
+                        <th onclick="handleSort('rightTable', 'Status')">Status</th>
+                        <th onclick="handleSort('rightTable', 'REQ No.')">REQ No.</th>
+                        <th onclick="handleSort('rightTable', 'Type')">Type</th>
+                        <th onclick="handleSort('rightTable', 'Request Detail')">Description</th>
+                        <th onclick="handleSort('rightTable', 'Requested for')">Requested for</th>
+                        <th onclick="handleSort('rightTable', 'Assign To')">PIC</th>
+                        <th onclick="handleSort('rightTable', 'Time - Arrive')">Received</th>
+                        <th onclick="handleSort('rightTable', 'Time - Close')">Resolved</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('reportForm');
+        const genBtn = document.getElementById('genBtn');
+        const pdfBtn = document.getElementById('pdfBtn');
+        const status = document.getElementById('status');
+        const resultArea = document.getElementById('resultArea');
+
+        let currentData = null;
+        let sortState = {
+            leftTable: { col: null, asc: true },
+            rightTable: { col: null, asc: true }
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await runReport('/generate', 'json');
+        });
+
+        pdfBtn.addEventListener('click', async () => {
+            await runReport('/pdf', 'blob');
+        });
+
+        async function runReport(endpoint, type) {
+            status.style.display = 'block';
+            status.className = '';
+            status.textContent = 'Processing...';
+            genBtn.disabled = true;
+            pdfBtn.disabled = true;
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(endpoint, { method: 'POST', body: formData });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail.message || 'Operation failed');
+                }
+
+                if (type === 'json') {
+                    currentData = await response.json();
+                    displayResult();
+                    pdfBtn.disabled = false;
+                    status.style.display = 'none';
+                } else {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    const cd = response.headers.get('Content-Disposition');
+                    let filename = 'report.pdf';
+                    if (cd && cd.includes('filename=')) filename = cd.split('filename=')[1].replace(/["']/g, '');
+                    a.href = url; a.download = filename; a.click();
+                    status.style.display = 'none';
+                    pdfBtn.disabled = false;
+                }
+            } catch (err) {
+                status.className = 'error';
+                status.textContent = 'Error: ' + err.message;
+            } finally {
+                genBtn.disabled = false;
+            }
+        }
+
+        function displayResult() {
+            if (!currentData) return;
+            resultArea.style.display = 'block';
+
+            const fmt = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+
+            // Summary
+            document.getElementById('summaryBox').innerHTML = `
+                <div class="summary-item">
+                    <span class="summary-label">Report Period</span>
+                    <span class="summary-value">${fmt(currentData.period.begin)} — ${fmt(currentData.period.end)}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Tickets Closed</span>
+                    <span class="summary-value" style="color: #10b981;">${currentData.summary.closed_count}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Tickets Open</span>
+                    <span class="summary-value" style="color: #f59e0b;">${currentData.summary.open_count}</span>
+                </div>
+            `;
+
+            // Tables
+            const leftTicketNos = new Set(currentData.left_section.map(t => t['Ticket No.']));
+
+            const leftCols = ['Ticket No.', 'Request Detail', 'Remarks'];
+            const rightCols = ['Ticket No.', 'Status', 'REQ No.', 'Type', 'Request Detail', 'Requested for', 'Assign To', 'Time - Arrive', 'Time - Close'];
+
+            renderTable('leftTable', currentData.left_section, leftCols, leftTicketNos);
+            renderTable('rightTable', currentData.right_section, rightCols, leftTicketNos);
+        }
+
+        function handleSort(tableId, colName) {
+            const state = sortState[tableId];
+            if (state.col === colName) {
+                state.asc = !state.asc;
+            } else {
+                state.col = colName;
+                state.asc = true;
+            }
+
+            const dataKey = tableId === 'leftTable' ? 'left_section' : 'right_section';
+            currentData[dataKey].sort((a, b) => {
+                let valA = a[colName] || '';
+                let valB = b[colName] || '';
+
+                // Date handling for sorting
+                if (colName.includes('Time') || colName === 'Date') {
+                    valA = valA ? new Date(valA) : new Date(0);
+                    valB = valB ? new Date(valB) : new Date(0);
+                }
+
+                if (valA < valB) return state.asc ? -1 : 1;
+                if (valA > valB) return state.asc ? 1 : -1;
+                return 0;
+            });
+
+            // Update UI indicators
+            const table = document.getElementById(tableId);
+            table.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                const text = th.textContent.toLowerCase();
+                const colLower = colName.toLowerCase();
+                if (text.includes('ticket') && colLower.includes('ticket')) th.classList.add(state.asc ? 'sort-asc' : 'sort-desc');
+                else if (text.includes('status') && colLower.includes('status')) th.classList.add(state.asc ? 'sort-asc' : 'sort-desc');
+                else if (text.includes('desc') && colLower.includes('detail')) th.classList.add(state.asc ? 'sort-asc' : 'sort-desc');
+                else if (text.includes('received') && colLower.includes('arrive')) th.classList.add(state.asc ? 'sort-asc' : 'sort-desc');
+                else if (text.includes('resolved') && colLower.includes('close')) th.classList.add(state.asc ? 'sort-asc' : 'sort-desc');
+                else if (th.textContent.includes(colName)) th.classList.add(state.asc ? 'sort-asc' : 'sort-desc'); // Fallback
+            });
+            // Re-render
+            displayResult();
+        }
+
+        function renderTable(id, rows, cols, boldTicketNos = new Set()) {
+            const tbody = document.querySelector(`#${id} tbody`);
+            tbody.innerHTML = '';
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                if (boldTicketNos.has(row['Ticket No.'])) {
+                    tr.classList.add('bold-row');
+                }
+                cols.forEach(col => {
+                    const td = document.createElement('td');
+                    let val = row[col] || '';
+                    if (col.includes('Time') && val) val = val.split('T')[0];
+                    td.textContent = val;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Default dates: Monday and Friday of the previous week
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const daysToThisMonday = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+        const start = new Date(now);
+        start.setDate(now.getDate() - daysToThisMonday - 7);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 4);
+        const toLocalISO = (d) => {
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        };
+        document.getElementById('begin_date').value = toLocalISO(start);
+        document.getElementById('end_date').value = toLocalISO(end);
+    </script>
+</body>
+
+</html>

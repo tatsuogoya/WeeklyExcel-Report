@@ -1,37 +1,232 @@
-# Professional Development Roadmap: Web & Oracle Migration
+# IFS AMS Workload Summary - Implementation Plan
 
-> **Objective**: Transition the Excel-based reporting tool to an Enterprise-grade Web Application backed by an Oracle Database.
+## 1. Purpose
 
-## Proposed Architecture
+This application generates a **Weekly Report** from daily ServiceNow ticket data
+stored in Excel (**NA Daily work.xlsx**).
 
-```mermaid
-graph TD
-    User((Tatsuo/Team)) --> Web[Web Frontend - React]
-    Web --> API[Backend API - Flask/Python]
-    API --> DB[(Oracle Database)]
-    API --> Excel[Excel Report Generator]
-    Excel --> User
-```
+The output is:
+- Displayed on a **web screen**
+- Downloadable as a **PDF**
 
-## Phase 1: Database Foundation
-1.  **Schema Design**: Define the `IFS_TICKETS` table structure (Ticket No, Status, Category, PIC, etc.).
-2.  **Migration Tool**: Build a one-time Python script to read `NA Daily work.xlsx` and insert all historical data into Oracle.
-3.  **Upsert Logic**: Implement logic to handle data sync between Excel and DB if necessary.
+Excel output is **not used** in MVP.
 
-## Phase 2: Backend API (Python)
-1.  **Connectivity**: Install `oracledb` and set up secure credential management.
-2.  **Logic Layer**: Migrate the "Backlog" and "Strict" filtering logic from `generate_report.py` into SQL queries.
-3.  **Endpoints**:
-    *   `GET /tickets`: Fetch tickets based on filters.
-    *   `GET /stats`: Fetch weekly dashboard statistics.
-    *   `POST /tickets`: Allow web-based ticket entry.
+---
 
-## Phase 3: Frontend & Reporting
-1.  **Dashboard UI**: Create a clean, responsive page using Tailwind CSS.
-2.  **Statistics Cards**: Display Open/Closed counts dynamically.
-3.  **Export Engine**: Wire up the current `generate_report.py` logic to a "Download Excel" button on the web page.
+## 2. Scope (MVP)
 
-## Verification Plan
-*   **Data Integrity**: Verify counts in Oracle match the Excel source.
-*   **Performance**: Compare report generation speed (DB vs Excel).
-*   **User Experience**: Validate that the web form saves correctly to Oracle.
+### In Scope
+- Upload Excel file (`.xlsx`)
+- Input report period (Begin Date / End Date)
+- Display weekly report on web page
+- Download the same report as PDF
+- Validation and clear error handling
+
+### Out of Scope
+- Monthly reports
+- Authentication / authorization
+- Background jobs
+- Excel output / macros
+
+---
+
+## 3. High-Level Architecture
+
+---
+
+## 4. API Design
+
+### GET /
+- Returns HTML page
+- Upload form + date inputs
+- Result display area
+
+### POST /generate
+- Input:
+  - Excel file
+  - begin_date
+  - end_date
+- Output:
+  - JSON representing the weekly report
+
+### POST /pdf
+- Input:
+  - Excel file
+  - begin_date
+  - end_date
+- Output:
+  - PDF (`application/pdf`)
+- Uses the same business logic as `/generate`
+
+---
+
+## 5. Core Business Logic (Service Layer)
+
+### 5.1 Input Data
+- Excel file: `NA Daily work.xlsx`
+- Sheets:
+  - Year-based (e.g. `2025`, `2026`)
+
+### Required Columns
+- Date
+- Ticket No.
+- REQ No.
+- Type
+- Requested for
+- Assign To
+- Request Detail
+- Time - Arrive
+- Time - Close
+- Status
+- Remarks
+
+---
+
+## 6. Report Structure
+
+The weekly report contains **three logical parts**:
+
+---
+
+### 6.1 Summary (Period Header)
+
+**Date Range**
+
+**Counts**
+- `open_count`: Status = "OPEN"
+- `closed_count`: Status = "CLOSE"
+
+Rules:
+- All sheets are included
+- Status values are uppercase
+
+---
+
+### 6.2 Left Section – Weekly Activity
+
+**Purpose**
+- Show what happened during the selected period
+
+**Selection Rules**
+- `begin_date <= Date <= end_date`
+- Status = "OPEN" only
+
+**Sorting**
+- Received (Time - Arrive) ascending
+- Ticket No. ascending
+
+---
+
+### 6.3 Right Section – Open Tickets Backlog
+
+**Purpose**
+- Show current unresolved tickets
+
+**Year Context**
+- `current_year = end_date.year`
+- `previous_year = current_year - 1`
+
+**Data Source**
+- Sheets: current_year and previous_year (if exists)
+
+**Selection Rules**
+- `begin_date <= Date <= end_date`
+- Status = "OPEN" or "CLOSED"
+
+**Sorting**
+- Received (Time - Arrive) ascending
+- Ticket No. ascending
+
+---
+
+## 7. Data Mapping (Unified Model)
+
+All outputs (Web + PDF) use the same field names:
+
+- ServiceNow Ticket #
+- REQ No.
+- Type
+- Description
+- Requested for
+- PIC
+- Received
+- Resolved
+- Remarks
+
+Optional (display/debug):
+- Status
+- Date
+
+---
+
+## 8. PDF Generation
+
+### Strategy (MVP)
+- Use `reportlab`
+- Programmatic table rendering
+- Fixed, business-report-style layout
+
+### Content
+- Summary section
+- Weekly Activity table
+- Open Tickets Backlog table
+
+---
+
+## 9. Validation & Error Handling
+
+### Validation
+- File is `.xlsx`
+- begin_date <= end_date
+- Required columns exist
+- Date fields are parseable
+
+### Errors
+| Type | HTTP | Meaning |
+|----|----|----|
+| InputPayloadError | 400 | Invalid request |
+| ExcelSchemaError | 400 | Missing sheet / column |
+| NoDataWarning | 400 | No matching data |
+| SystemError | 500 | Unexpected error |
+
+---
+
+## 10. Testing Strategy
+
+### Unit Tests (pytest)
+- Date filtering
+- Section separation logic
+- Summary count accuracy
+- Sorting order
+
+### Integration Tests
+- `/generate` JSON structure
+- `/pdf` returns valid PDF
+
+PDF tests are lightweight:
+- File is generated
+- Key text exists (period, ticket no.)
+
+---
+
+## 11. Repository Structure (Planned)
+/app
+/api
+/services
+/infra
+/excel
+/tests
+/docs
+implementation_plan.md
+README.md
+
+
+---
+
+## 12. Rules for AI Tools
+
+- Design must be finalized before coding
+- README.md + implementation_plan.md are the **authoritative specs**
+- No AI-invented behavior allowed
+
+
