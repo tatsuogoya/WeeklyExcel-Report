@@ -32,11 +32,21 @@ def create_sample_data():
         "Status": ["OPEN", "CLOSE"]
     }
 
+    # New Users data
+    data_new_users = {
+        "Ticket No": ["USR-001", "USR-002", "USR-003"],
+        "Date Created": [datetime(2026, 1, 6), datetime(2026, 1, 8), datetime(2026, 1, 10)],
+        "User Name": ["Alice Smith", "Bob Jones", "Charlie Brown"],
+        "Function / Department": ["Finance", "IT", "HR"],
+        "Email address": ["alice@example.com", "bob@example.com", "charlie@example.com"]
+    }
+
     with pd.ExcelWriter("sample_daily_work.xlsx") as writer:
         pd.DataFrame(data_2026).to_excel(writer, sheet_name="2026", index=False)
         pd.DataFrame(data_2025).to_excel(writer, sheet_name="2025", index=False)
+        pd.DataFrame(data_new_users).to_excel(writer, sheet_name="New Users", index=False)
     
-    print("V2 Sample data created at sample_daily_work.xlsx (Sheets: 2026, 2025)")
+    print("V2 Sample data created at sample_daily_work.xlsx (Sheets: 2026, 2025, New Users)")
 
 if __name__ == "__main__":
     create_sample_data()

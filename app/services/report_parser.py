@@ -102,31 +102,101 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
 
     # 4. New Users Section (no date filtering, show all)
     new_users_df = pd.DataFrame()
-    if "New Users" in all_sheets:
-        new_users_raw = all_sheets["New Users"].copy()
+    # Find sheet name case-insensitively
+    new_users_sheet_name = next((name for name in all_sheets.keys() if name.lower() == "new users"), None)
+    
+    print(f"DEBUG: New Users sheet found: {new_users_sheet_name}")
+    
+    if new_users_sheet_name:
+        new_users_raw = all_sheets[new_users_sheet_name].copy()
+        print(f"DEBUG: New Users raw shape: {new_users_raw.shape}")
+        print(f"DEBUG: New Users raw columns (first 5): {list(new_users_raw.columns)[:5]}")
         
-        if len(new_users_raw) > 1:
-            # Check if columns are "Unnamed: X" format
-            if any("Unnamed" in str(col) for col in new_users_raw.columns):
-                # Create mapping: old_col_name -> value_from_first_row
-                new_header = dict(zip(new_users_raw.columns, new_users_raw.iloc[0]))
-                # Rename columns
-                new_users_raw = new_users_raw.rename(columns=new_header)
-                # Skip the first row (which was the header row)
-                new_users_df = new_users_raw.iloc[1:].copy()
+        if len(new_users_raw) > 0:
+            # Helper to sanitize column names
+            def sanitize_col(col):
+                if pd.isna(col):
+                    return ""
+                s = str(col).strip()
+                if s.lower() == 'nan':
+                    return ""
+                s = s.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
+                s = ' '.join(s.split())  # Normalize multiple spaces
+                return s
+            
+            # Check if columns are problematic (Unnamed, NaN, or nan strings)
+            cols_are_bad = any(
+                "Unnamed" in str(col) or pd.isna(col) or str(col).lower() == 'nan'
+                for col in new_users_raw.columns
+            )
+            
+            # Expected column keywords to look for in header row
+            expected_keywords = ['ticket', 'date', 'user', 'name', 'email', 'department', 'function']
+            
+            if cols_are_bad:
+                print("DEBUG: Columns are bad, scanning for header row...")
+                # Scan first 10 rows to find a row that looks like headers
+                header_row_idx = None
+                for idx in range(min(10, len(new_users_raw))):
+                    row_values = [str(v).lower() for v in new_users_raw.iloc[idx] if pd.notna(v)]
+                    matches = sum(1 for kw in expected_keywords if any(kw in val for val in row_values))
+                    if matches >= 2:  # At least 2 matching keywords
+                        header_row_idx = idx
+                        print(f"DEBUG: Found header row at index {idx}: {list(new_users_raw.iloc[idx])}")
+                        break
+                
+                if header_row_idx is not None:
+                    # Use this row as headers
+                    new_header = dict(zip(new_users_raw.columns, new_users_raw.iloc[header_row_idx]))
+                    new_users_raw = new_users_raw.rename(columns=new_header)
+                    # Skip rows up to and including header row
+                    new_users_df = new_users_raw.iloc[header_row_idx + 1:].copy()
+                else:
+                    print("DEBUG: Could not find header row, using raw data")
+                    new_users_df = new_users_raw.copy()
             else:
                 new_users_df = new_users_raw.copy()
             
-            # Clean up column names (strip whitespace)
-            new_users_df.columns = [str(c).strip() for c in new_users_df.columns]
+            # Sanitize column names
+            new_users_df.columns = [sanitize_col(c) for c in new_users_df.columns]
+            # Remove empty column names
+            new_users_df = new_users_df.loc[:, new_users_df.columns != ""]
+            print(f"DEBUG: New Users sanitized columns: {list(new_users_df.columns)}")
+            
+            # Map common column name variations to expected names
+            column_mapping = {
+                'Ticket No.': 'Ticket No',
+                'Email': 'Email address',
+                'E-mail address': 'Email address',
+                'EmailAddress': 'Email address',
+                'Department': 'Function / Department',
+                'Dept': 'Function / Department',
+                'Function': 'Function / Department',
+                'User': 'User Name',
+                'Name': 'User Name',
+                'UserName': 'User Name',
+                'Created': 'Date Created',
+                'Date': 'Date Created',
+            }
+            new_users_df = new_users_df.rename(columns={k: v for k, v in column_mapping.items() if k in new_users_df.columns})
+            print(f"DEBUG: New Users columns after mapping: {list(new_users_df.columns)}")
             
             # Ensure Date Created is datetime
             if "Date Created" in new_users_df.columns:
                 new_users_df["Date Created"] = pd.to_datetime(new_users_df["Date Created"], errors='coerce')
             
-            # Remove empty rows
-            new_users_df = new_users_df.dropna(how='all')
+            # Remove empty rows (where key columns are all NaN)
+            key_cols = [c for c in ['Ticket No', 'User Name', 'Email address'] if c in new_users_df.columns]
+            if key_cols:
+                new_users_df = new_users_df.dropna(subset=key_cols, how='all')
+            else:
+                new_users_df = new_users_df.dropna(how='all')
             new_users_df = new_users_df.reset_index(drop=True)
+            
+            print(f"DEBUG: New Users final shape: {new_users_df.shape}")
+            print(f"DEBUG: New Users final columns: {list(new_users_df.columns)}")
+            if len(new_users_df) > 0:
+                print(f"DEBUG: New Users first row: {new_users_df.iloc[0].to_dict()}")
     
     return {
         "left_df": left_df,

@@ -218,6 +218,11 @@
             color: #2563eb !important;
         }
 
+        .highlight-row td {
+            font-weight: 700;
+            color: #2563eb !important;
+        }
+
         .section-title {
             font-size: 1.125rem;
             font-weight: 700;
@@ -394,12 +399,8 @@
         <div class="table-container">
             <table id="newUsersTable">
                 <thead>
-                    <tr>
-                        <th onclick="handleSort('newUsersTable', 'Ticket No')">Ticket No</th>
-                        <th onclick="handleSort('newUsersTable', 'Date Created')">Date Created</th>
-                        <th onclick="handleSort('newUsersTable', 'User Name')">User Name</th>
-                        <th onclick="handleSort('newUsersTable', 'Function / Department')">Department</th>
-                        <th onclick="handleSort('newUsersTable', 'Email address')">Email</th>
+                    <tr id="newUsersTableHead">
+                        <!-- Headers will be dynamically generated -->
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -417,7 +418,8 @@
         let currentData = null;
         let sortState = {
             leftTable: { col: null, asc: true },
-            rightTable: { col: null, asc: true }
+            rightTable: { col: null, asc: true },
+            newUsersTable: { col: null, asc: true }
         };
 
         form.addEventListener('submit', async (e) => {
@@ -472,10 +474,13 @@
         function displayResult() {
             if (!currentData) return;
             resultArea.style.display = 'block';
-            
+
             // Debug logging
+            console.log('=== displayResult Called ===');
             console.log('Current Data:', currentData);
-            console.log('New Users Section:', currentData.new_users_section);
+            console.log('new_users_section:', currentData.new_users_section);
+            console.log('new_users_section type:', Array.isArray(currentData.new_users_section));
+            console.log('new_users_section length:', currentData.new_users_section ? currentData.new_users_section.length : 'undefined');
 
             const fmt = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
 
@@ -500,11 +505,42 @@
 
             const leftCols = ['Ticket No.', 'Request Detail', 'Remarks'];
             const rightCols = ['Ticket No.', 'Status', 'REQ No.', 'Type', 'Request Detail', 'Requested for', 'Assign To', 'Time - Arrive', 'Time - Close'];
-            const newUsersCols = ['Ticket No', 'Date Created', 'User Name', 'Function / Department', 'Email address'];
+            // Dynamic columns for New Users based on actual data
+            let newUsersCols = ['Ticket No', 'Date Created', 'User Name', 'Function / Department', 'Email address']; // Default
+            let newUsersData = currentData.new_users_section || [];
+
+            // Auto-detect columns from data if available
+            if (newUsersData.length > 0) {
+                const firstRow = newUsersData[0];
+                // Get all keys that aren't empty/nan
+                newUsersCols = Object.keys(firstRow).filter(k => k && k !== '' && k.toLowerCase() !== 'nan');
+                console.log('Detected New Users columns:', newUsersCols);
+            }
+
+            // Sort by Date Created descending (newest first)
+            if (newUsersData.length > 0) {
+                newUsersData.sort((a, b) => {
+                    const dateA = a['Date Created'] ? new Date(a['Date Created']) : new Date(0);
+                    const dateB = b['Date Created'] ? new Date(b['Date Created']) : new Date(0);
+                    return dateB - dateA; // Descending
+                });
+            }
+
+            // Dynamic header generation for New Users table
+            const newUsersHead = document.getElementById('newUsersTableHead');
+            if (newUsersHead) {
+                newUsersHead.innerHTML = newUsersCols.map(col =>
+                    `<th onclick="handleSort('newUsersTable', '${col}')">${col}</th>`
+                ).join('');
+            }
 
             renderTable('leftTable', currentData.left_section, leftCols, leftTicketNos);
             renderTable('rightTable', currentData.right_section, rightCols, leftTicketNos);
-            renderTable('newUsersTable', currentData.new_users_section || [], newUsersCols);
+
+            // Pass date range to New Users table for highlighting
+            const beginDate = new Date(currentData.period.begin + 'T00:00:00');
+            const endDate = new Date(currentData.period.end + 'T23:59:59');
+            renderTable('newUsersTable', newUsersData, newUsersCols, new Set(), { beginDate, endDate });
         }
 
         function handleSort(tableId, colName) {
@@ -549,17 +585,35 @@
             displayResult();
         }
 
-        function renderTable(id, rows, cols, boldTicketNos = new Set()) {
+        function renderTable(id, rows, cols, boldTicketNos = new Set(), dateRange = null) {
+            console.log(`renderTable called: id=${id}, rows=${Array.isArray(rows) ? rows.length : '?'}, cols=${cols.length}`);
+
             const tbody = document.querySelector(`#${id} tbody`);
-            tbody.innerHTML = '';
-            
-            // Debug: log columns we're looking for
-            if (id === 'newUsersTable' && rows.length > 0) {
-                console.log('New Users - Looking for columns:', cols);
-                console.log('New Users - First row keys:', Object.keys(rows[0]));
-                console.log('New Users - First row data:', rows[0]);
+            if (!tbody) {
+                console.error(`ERROR: Could not find tbody for table #${id}`);
+                return;
             }
-            
+            tbody.innerHTML = '';
+
+            // Debug: log columns we're looking for
+            if (id === 'newUsersTable') {
+                console.log('New Users Table Debug:');
+                console.log('  - Looking for columns:', cols);
+                console.log('  - Rows received:', Array.isArray(rows) ? rows.length : 'NOT AN ARRAY');
+                if (Array.isArray(rows) && rows.length > 0) {
+                    console.log('  - First row keys:', Object.keys(rows[0]));
+                    console.log('  - First row data:', rows[0]);
+                }
+                if (dateRange) {
+                    console.log('  - Date range for highlighting:', dateRange.beginDate, 'to', dateRange.endDate);
+                }
+            }
+
+            if (!Array.isArray(rows)) {
+                console.error(`ERROR: rows is not an array for table #${id}`, rows);
+                return;
+            }
+
             rows.forEach(row => {
                 const tr = document.createElement('tr');
                 // Check both 'Ticket No.' and 'Ticket No' for compatibility
@@ -567,6 +621,15 @@
                 if (boldTicketNos.has(ticketNo)) {
                     tr.classList.add('bold-row');
                 }
+
+                // Highlight New Users created within the date range
+                if (dateRange && row['Date Created']) {
+                    const rowDate = new Date(row['Date Created']);
+                    if (rowDate >= dateRange.beginDate && rowDate <= dateRange.endDate) {
+                        tr.classList.add('highlight-row');
+                    }
+                }
+
                 cols.forEach(col => {
                     const td = document.createElement('td');
                     // Try both with and without dot for column names

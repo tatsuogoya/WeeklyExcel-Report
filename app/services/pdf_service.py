@@ -71,10 +71,57 @@ def generate_pdf_service(data: dict, begin_date: date, end_date: date) -> str:
 
     # Add New Users section if data exists
     if not new_users_df.empty:
+        # Sort by Date Created descending (newest first)
+        if "Date Created" in new_users_df.columns:
+            new_users_df = new_users_df.sort_values(by="Date Created", ascending=False, na_position='last')
+        
+        # Dynamically detect columns from the DataFrame
+        all_cols = [c for c in new_users_df.columns if c and str(c).lower() != 'nan' and c != '']
+        
+        # Create dynamic column mapping: (display_name, source_name)
+        dynamic_new_users_cols = [(col, col) for col in all_cols]
+        
+        # Calculate dynamic widths (distribute evenly across page width ~10.8 inches)
+        total_width = 10.8 * inch
+        num_cols = len(dynamic_new_users_cols)
+        if num_cols > 0:
+            col_width = total_width / num_cols
+            dynamic_widths = [col_width] * num_cols
+        else:
+            dynamic_widths = []
+        
+        # Prepare table data with date range highlighting
+        def prepare_new_users_table(df, mapping, begin_dt, end_dt):
+            table_data = [[h for h, _ in mapping]]  # Header row
+            for _, row in df.iterrows():
+                line = []
+                # Check if this user was created within the date range
+                date_created = row.get("Date Created")
+                is_in_range = False
+                if pd.notna(date_created):
+                    try:
+                        if isinstance(date_created, (date, pd.Timestamp)):
+                            row_date = date_created.date() if hasattr(date_created, 'date') else date_created
+                        else:
+                            row_date = pd.to_datetime(date_created).date()
+                        is_in_range = begin_dt <= row_date <= end_dt
+                    except:
+                        pass
+                
+                for _, source_col in mapping:
+                    val = format_val(row.get(source_col))
+                    if is_in_range:
+                        para_val = f'<b><font color="dodgerblue">{val}</font></b>'
+                    else:
+                        para_val = val
+                    line.append(Paragraph(para_val, styles['Normal']))
+                table_data.append(line)
+            return table_data
+        
         sections.append({
             "title": "New Users",
-            "data": prepare_table_data(new_users_df, NEW_USERS_COLUMNS),
-            "widths": [1.2*inch, 1.0*inch, 2.0*inch, 1.5*inch, 2.3*inch],
+            "data": prepare_new_users_table(new_users_df, dynamic_new_users_cols, begin_date, end_date),
+            "widths": dynamic_widths,
             "empty_msg": "No new users found."
         })
 
