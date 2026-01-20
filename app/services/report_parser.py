@@ -103,14 +103,14 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
     # 4. New Users Section (no date filtering, show all)
     new_users_df = pd.DataFrame()
     if "New Users" in all_sheets:
-        new_users_raw = all_sheets["New Users"]
+        new_users_raw = all_sheets["New Users"].copy()
         
-        if len(new_users_raw) > 0:
+        if len(new_users_raw) > 1:
             # Check if columns are "Unnamed: X" format
             if any("Unnamed" in str(col) for col in new_users_raw.columns):
-                # First row contains the actual headers
-                # Use it as the new column names
-                new_header = new_users_raw.iloc[0].to_dict()
+                # Create mapping: old_col_name -> value_from_first_row
+                new_header = dict(zip(new_users_raw.columns, new_users_raw.iloc[0]))
+                # Rename columns
                 new_users_raw = new_users_raw.rename(columns=new_header)
                 # Skip the first row (which was the header row)
                 new_users_df = new_users_raw.iloc[1:].copy()
