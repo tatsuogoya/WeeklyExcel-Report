@@ -1,0 +1,82 @@
+{
+  "monthly_data": {
+    "2025-12": {
+      "me_hours": 0.0,
+      "sow_planned": 16.0,
+      "carry_forward": 16.0,
+      "last_updated": "2026-02-02T09:04:31.614414"
+    },
+    "2025-01": {
+      "me_hours": 8.0,
+      "sow_planned": 16.0,
+      "carry_forward": 8.0,
+      "last_updated": "2026-02-02T08:14:52.288477"
+    },
+    "2025-02": {
+      "me_hours": 13.0,
+      "sow_planned": 16.0,
+      "carry_forward": 3.0,
+      "last_updated": "2026-02-02T08:18:08.216720"
+    },
+    "2025-03": {
+      "me_hours": 12.0,
+      "sow_planned": 16.0,
+      "carry_forward": 4.0,
+      "last_updated": "2026-02-02T08:18:42.269131"
+    },
+    "2025-04": {
+      "me_hours": 14.0,
+      "sow_planned": 16.0,
+      "carry_forward": 2.0,
+      "last_updated": "2026-02-02T08:18:54.272895"
+    },
+    "2025-05": {
+      "me_hours": 7.0,
+      "sow_planned": 16.0,
+      "carry_forward": 9.0,
+      "last_updated": "2026-02-02T08:19:06.978393"
+    },
+    "2025-06": {
+      "me_hours": 30.0,
+      "sow_planned": 16.0,
+      "carry_forward": -14.0,
+      "last_updated": "2026-02-02T08:19:19.532368"
+    },
+    "2025-07": {
+      "me_hours": 6.0,
+      "sow_planned": 16.0,
+      "carry_forward": 10.0,
+      "last_updated": "2026-02-02T08:19:35.890126"
+    },
+    "2025-08": {
+      "me_hours": 19.0,
+      "sow_planned": 16.0,
+      "carry_forward": -3.0,
+      "last_updated": "2026-02-02T08:19:46.345627"
+    },
+    "2025-09": {
+      "me_hours": 2.0,
+      "sow_planned": 16.0,
+      "carry_forward": 14.0,
+      "last_updated": "2026-02-02T08:20:37.553342"
+    },
+    "2025-10": {
+      "me_hours": 2.0,
+      "sow_planned": 16.0,
+      "carry_forward": 14.0,
+      "last_updated": "2026-02-02T08:20:47.085929"
+    },
+    "2025-11": {
+      "me_hours": 0.0,
+      "sow_planned": 16.0,
+      "carry_forward": 16.0,
+      "last_updated": "2026-02-02T08:21:30.062105"
+    },
+    "2026-01": {
+      "me_hours": 0.0,
+      "sow_planned": 16.0,
+      "carry_forward": 16.0,
+      "last_updated": "2026-02-02T12:47:51.229102"
+    }
+  }
+}

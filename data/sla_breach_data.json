@@ -1,0 +1,48 @@
+{
+  "monthly_data": {
+    "2025-12": {
+      "year": 2025,
+      "month": 12,
+      "breaches": [
+        {
+          "id": 1,
+          "ticket_no": "INC 123 546",
+          "requested_for": "Tugi",
+          "description": "reset password",
+          "percentage": "222333444",
+          "elapsed_time": "2 hours 30 minutes",
+          "remarks": "test3",
+          "created_at": "2026-02-02T09:04:31.603984"
+        },
+        {
+          "id": 2,
+          "ticket_no": "333",
+          "requested_for": "Mikal",
+          "description": "asdfa",
+          "percentage": "433",
+          "elapsed_time": "222",
+          "remarks": "",
+          "created_at": "2026-02-02T09:04:31.604016"
+        }
+      ],
+      "updated_at": "2026-02-02T09:04:31.604021"
+    },
+    "2025-01": {
+      "year": 2025,
+      "month": 1,
+      "breaches": [
+        {
+          "id": 1,
+          "ticket_no": "INC 123 546",
+          "requested_for": "Daniel",
+          "description": "reset password",
+          "percentage": "",
+          "elapsed_time": "4 days",
+          "remarks": "",
+          "created_at": "2026-02-02T08:14:56.031323"
+        }
+      ],
+      "updated_at": "2026-02-02T08:14:56.031332"
+    }
+  }
+}

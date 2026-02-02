@@ -277,229 +277,76 @@ To ensure long-term maintenance, the following structural improvements are being
 
 ---
 
-## 14. Future Expansion: Monthly Report (Planned)
+## 14. Phase 3: Monthly Report (Strategic Implementation)
 
-> **Status**: Requirements gathering phase  
-> **Current State**: Manually created each month  
-> **Goal**: Fully automated generation like weekly report
+### 📊 Vision
+The monthly report transforms raw ticket data into a strategic KPI summary (Marelli IFS Monthly KPI) for management review. It focuses on annual trends, category-specific performance, and service/incident categorization.
 
-### Overview
+### 🖼️ Report Structure (Based on Reference Images)
 
-The monthly report provides aggregated analytics and visualizations for management review. Unlike the weekly report (which shows raw ticket data), the monthly report focuses on:
-- **Trend analysis** over time
-- **Category breakdowns** with percentages
-- **Development effort tracking**
-- **SLA compliance monitoring**
+#### 1. Title & TOC
+- **Branding**: Alpash / Marelli Logo.
+- **Title**: Marelli IFS Monthly KPI - Monthly Report for [Month-Year].
+- **Sections**: 
+  1. Total incidents and SRs.
+  2. Development hours, how much is planned and utilized (Placeholder for now).
 
-### Data Sources
+#### 2. Annual Summary (Stacked Bar Chart)
+- **Purpose**: Monthly ticket volume breakdown for the entire year.
+- **X-Axis**: Jan to Dec.
+- **Y-Axis**: Ticket Count (0-200 range).
+- **Categories (Stacks)**:
+  - `Miscellaneous` (Navy)
+  - `Development` (Orange)
+  - `Transfer to another group` (Teal)
+  - `Permissions control` (Purple)
+  - `Create account` (Olive/Green)
+  - `Reset password` (Red/Brown)
+  - `Deactivate account` (Blue)
+- **Data Table**: A corresponding table below the chart showing raw monthly counts for each category.
 
-#### Primary Source
-- Same `NA Daily work.xlsx` file as weekly report
-- Aggregated over full calendar month period
+#### 3. Total Incidents and SRs (Pivot Table)
+- **Grouping**: Hierarchical grouping by `Incident` and `Service`.
+- **Columns**:
+  - `CATEGORY`
+  - `TRANS_NON`
+  - `TRANS_WORK`
+  - `CANCEL`
+  - `OPEN`
+  - `CLOSE`
+  - `Grand Total`
+- **Mapping Logic**: Needs to be defined (e.g., Status mapping to pivot columns).
 
-#### External Parameters (Manual Input)
-The following data comes from outside sources and should be configurable:
+#### 4. Total Incidents and SRs (Pie Chart)
+- **Purpose**: Percentage distribution of categories for the selected month.
+- **Data**: All ticket categories included.
 
-1. **Development Efforts** section:
-   - `ME Hours` (monthly values)
-   - `SOW Planned` (monthly values)
-   - `Carry Forward` (monthly values)
-   - Development ticket details (Ticket No, Phase, Description, Plan Effort, Plan Close)
+---
 
-2. **Configuration**:
-   - Month/Year selection
-   - Custom category mappings (if different from weekly)
+### 📝 Strategic Questions for "The Boss" (Tatsuo-san)
 
-### Report Sections
+To ensure perfect alignment before we begin coding, I have a few missing pieces to confirm:
 
-#### 1. Total Incidents and SRs (Pie Chart)
-**Purpose**: Visual breakdown of ticket categories
+1. **Incident vs Service**: 
+   - Image 4 shows categories like "Reset password" appearing under both `Incident` and `Service`. 
+   - **Question**: Is there a specific column in the Excel file that tells us if a ticket is an "Incident" or a "Service"? Or should the AI determine this based on other keywords?
 
-**Data**:
-- Categories: Deactivate account, Reset password, Transfer to another group, Permissions control, Create account, Cancel, Miscellaneous
-- Shows percentage distribution
+2. **Column Mapping (TRANS_NON, TRANS_WORK, etc.)**:
+   - **Question**: How do we map the Excel "Status" to columns like `TRANS_NON` and `TRANS_WORK`? 
+   - Usually, `CLOSE` means the status is 'CLOSE', but the others are less obvious.
 
-**Chart Type**: Pie chart (programmatic generation using matplotlib/plotly)
+3. **Development Hours (TOC Item 2)**:
+   - **Question**: You mentioned focus on the first 5 slides, but the TOC lists "Development hours". Is this information currently in the Excel file, or is this a manual entry for later?
 
-**Business Rules**:
-- Count all tickets for the selected month
-- Group by ticket Type or Category field
-- Calculate percentages
+4. **Status of Jan 2026**:
+   - Since January isn't finished, should we use **December 2025** as our primary test case for the first "Master Monthly Report"?
 
-#### 2. Total Incidents and SRs (Pivot Table)
-**Purpose**: Detailed status breakdown by category
+---
 
-**Columns**:
-- `CATEGORY` (dropdown filter in PDF)
-- `TRANS_NON`, `TRANS_WORK`, `CANCEL`, `OPEN`, `CLOSE`
-- `Grand Total`
+### 🚀 Implementation Strategy
 
-**Rows**:
-- Grouped into "Incident" and "Service"
-- Individual categories under each group
-- Grand Total row
-
-**Business Rules**:
-- Aggregate by Category and Status
-- Hierarchical grouping (Incident vs Service)
-
-#### 3. Development Efforts
-**Purpose**: Track development work hours
-
-**Table 1 - Monthly Hours**:
-| Metric | Jan | Feb | Mar | ... | Dec | Total |
-|--------|-----|-----|-----|-----|-----|-------|
-| ME Hours | (external param) |
-| SOW Planned | (external param) |
-| Carry Forward | (external param) |
-
-**Table 2 - Ongoing/Recently Closed**:
-| Ticket No | Phase | Description | Plan Effort | Plan Close |
-|-----------|-------|-------------|-------------|------------|
-| ... | ... | ... | ... | ... |
-
-**Data Source**: 
-- Monthly metrics: External parameters (manual input)
-- Ticket details: External parameters or filtered from Excel
-
-#### 4. SLA Breach
-**Purpose**: Highlight tickets that exceeded SLA
-
-**Columns**:
-- Ticket No.
-- Requested for
-- Description
-- Time-Arrive
-- Business elapsed time
-- Remarks
-
-**Business Rules**:
-- Show tickets where elapsed time > SLA threshold
-- Display "No SLA Breached tickets" if none found
-- SLA threshold may be a configurable parameter
-
-#### 5. Annual Summary (Stacked Bar Chart)
-**Purpose**: Year-over-year trend visualization
-
-**Chart Type**: Stacked bar chart by month
-
-**Data**:
-- X-axis: Months (Jan-Dec)
-- Y-axis: Ticket count
-- Stacks: Categories (color-coded like pie chart)
-
-**Business Rules**:
-- Aggregate tickets by month for current year
-- Stack by category
-- Include data table below chart
-
-### Technical Implementation Strategy
-
-#### Chart Generation
-**Library**: `matplotlib` (recommended for PDF embedding)
-- Alternative: `plotly` for web view interactivity
-
-**Approach**:
-1. Generate charts as PNG images
-2. Embed in PDF using ReportLab's `Image` class
-3. For web view: Generate interactive charts with plotly/Chart.js
-
-#### Architecture
-
-```
-/app/services/
-  ├── weekly_report_parser.py    # Rename current report_parser.py
-  ├── monthly_report_parser.py   # New: Monthly aggregation logic
-  └── chart_generator.py         # New: Shared chart utilities
-
-/app/api/
-  ├── weekly_report.py           # Rename current report.py
-  └── monthly_report.py          # New: Monthly endpoint
-
-/app/infra/
-  ├── pdf_renderer.py            # Existing (reuse)
-  └── chart_renderer.py          # New: matplotlib/plotly wrapper
-```
-
-#### API Design
-
-**Endpoint**: `POST /monthly`
-
-**Request**:
-```json
-{
-  "file": "<Excel file upload>",
-  "year": 2025,
-  "month": 12,
-  "development_efforts": {
-    "me_hours": [8, 13, 12, ...],
-    "sow_planned": [16, 16, 16, ...],
-    "carry_forward": [8, 3, 4, ...]
-  },
-  "dev_tickets": [
-    {
-      "ticket_no": "SCTASK0929134",
-      "phase": "OPEN",
-      "description": "...",
-      "plan_effort": 4,
-      "plan_close": "..."
-    }
-  ],
-  "sla_threshold_hours": 24 // Optional
-}
-```
-
-**Response**:
-- Web: JSON with chart data + aggregated tables
-- PDF: Binary PDF file
-
-#### Additional Dependencies
-
-Add to `requirements.txt`:
-```
-matplotlib>=3.8.0
-pandas>=2.1.0  # Already included
-numpy>=1.24.0  # For chart calculations
-```
-
-### Validation & Testing Strategy
-
-1. **Data Validation**:
-   - Ensure month/year are valid
-   - Validate development effort arrays (12 months)
-   - Check SLA threshold is positive number
-
-2. **Chart Generation**:
-   - Unit tests for chart_generator.py
-   - Ensure charts render correctly with various data sizes
-   - Handle edge cases (no data, single category, etc.)
-
-3. **PDF Layout**:
-   - Verify charts fit on landscape pages
-   - Test with min/max data scenarios
-
-### Open Questions
-
-- [ ] Should the web view support interactive filtering (e.g., click pie chart segment to filter table)?
-- [ ] Do we need Excel export for monthly report?
-- [ ] Should historical monthly reports be stored/archived?
-- [ ] Any custom branding/styling differences from weekly report?
-
-### Implementation Priority
-
-**Phase 1** (Core functionality):
-1. Monthly data aggregation service
-2. Pivot table generation
-3. Basic chart generation (pie, stacked bar)
-
-**Phase 2** (Enhanced features):
-4. Development Efforts section
-5. SLA Breach detection
-6. Web view with interactive charts
-
-**Phase 3** (Polish):
-7. Chart customization (colors, fonts)
-8. PDF layout optimization
-9. Error handling & validation
+1. **Create `app/services/monthly_report_service.py`**: Handle aggregation (Monthly & Annual).
+2. **Create `app/infra/chart_renderer.py`**: Using `matplotlib` to replicate the specific colors and stacked bar/pie chart styles.
+3. **Draft `Monthly_Report_Template.pdf`**: Matching the branding and layout seen in the slides.
 
 

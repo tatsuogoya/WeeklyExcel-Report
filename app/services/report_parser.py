@@ -73,11 +73,19 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
     
     # Summary Counts Rules
     # open_count: All OPEN tickets regardless of date
-    # closed_count: CLOSED tickets where "Time - Close" falls within the selected date range
+    # closed_count: Any ticket where "Time - Close" falls within the selected date range, regardless of Status
+    
+    # We use mask_range_close which checks: (Time - Close is not NaT) & (Time - Close in [begin, end])
+    # Note: open_count logic remains "Status == OPEN". 
+    # If a ticket has Status=OPEN but also has a Close Date in range (likely invalid data, but possible), 
+    # the new rule implies it should be counted as closed? 
+    # Meeting notes say: "count all tickets with resolved/closed time within date range, regardless of final status"
+    # So we strictly use the date.
+    
     all_open = full_df[full_df["Status"] == "OPEN"]
     open_count = int(len(all_open))
     
-    closed_in_range = full_df[(full_df["Status"] == "CLOSE") & mask_range_close]
+    closed_in_range = full_df[mask_range_close]
     closed_count = int(len(closed_in_range))
 
     # Left Section Rules: All OPEN tickets regardless of date
@@ -89,10 +97,21 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
         )
     left_df = left_df.sort_values(by=["Time - Arrive", "Ticket No."], ascending=[True, True])
 
-    # Right Section Rules: All OPEN tickets + CLOSED tickets where "Time - Close" is in date range
+    # Right Section Rules: All OPEN tickets + Any ticket with meaningful Close Date in range
     open_all = full_df[full_df["Status"] == "OPEN"].copy()
-    closed_range = full_df[(full_df["Status"] == "CLOSE") & mask_range_close].copy()
+    closed_range = full_df[mask_range_close].copy()
+    
+    # It's possible for a ticket to be both OPEN and have a Close Date in range if data is dirty.
+    # To avoid duplicates if we concat, let's verify.
+    # Usually OPEN tickets have NaT for Close Date.
+    # If we assume OPEN tickets don't have Close Date in range, then they are disjoint sets.
+    # But to be safe, we can handle duplicates if needed, or just trust the filters.
+    
     right_df = pd.concat([open_all, closed_range], ignore_index=True) if not closed_range.empty else open_all.copy()
+    
+    # Deduplicate in case a ticket matches both (e.g. Status=OPEN but has Close Date)
+    # The requirement isn't explicit on this edge case, but typically we don't want the same ticket twice in one list.
+    right_df = right_df.drop_duplicates(subset=["Ticket No."])
     
     if right_df.empty:
          raise HTTPException(
@@ -177,6 +196,9 @@ def process_report_data(all_sheets: Dict[str, pd.DataFrame], begin_date: date, e
                     return False
                 
                 new_users_df["is_new_user"] = new_users_df.apply(check_new, axis=1)
+                
+                # Filter to only show users created within the date range
+                new_users_df = new_users_df[new_users_df["is_new_user"] == True].copy()
             
             # Remove empty rows (where key columns are all NaN)
             key_cols = [c for c in ['Ticket No', 'User Name', 'Email address'] if c in new_users_df.columns]

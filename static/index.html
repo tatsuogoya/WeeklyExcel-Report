@@ -313,6 +313,15 @@
             opacity: 1;
         }
 
+        /* SLA Breach table - no sort icons */
+        #slaBreachTable th {
+            cursor: default;
+            padding-right: 12px;
+        }
+        #slaBreachTable th::after {
+            content: none;
+        }
+
         #status {
             margin-top: 1rem;
             text-align: center;
@@ -325,6 +334,155 @@
             background: #fee2e2;
             padding: 1rem;
             border-radius: 0.5rem;
+        }
+
+        /* Print optimization for Monthly Report - Aggressive 1-Page Fit */
+        @media print {
+            body {
+                margin: 0 !important;
+                padding: 3px !important;
+                background: white;
+            }
+            
+            .container {
+                display: none; /* Hide the form */
+            }
+            
+            #resultArea {
+                max-width: 100%;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* Prevent page breaks inside these sections */
+            .summary-card,
+            #monthlyResults > div {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            
+            /* Hide Annual Trends header to save space */
+            .print-hide {
+                display: none !important;
+            }
+            
+            /* Remove top margin/padding from first summary card */
+            #monthlyResults > .summary-card:first-of-type {
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+            }
+            
+            /* Drastically reduce section titles */
+            .section-title {
+                font-size: 0.85rem !important;
+                margin: 2px 0 1px 0 !important;
+                padding: 0 !important;
+                line-height: 1.1 !important;
+            }
+            
+            .section-title::before {
+                height: 0.8rem !important;
+            }
+            
+            /* Minimize summary card spacing */
+            .summary-card {
+                padding: 3px !important;
+                margin: 0 0 2px 0 !important;
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+            }
+            
+            /* Aggressively shrink Annual Summary Chart */
+            #annualSummaryChart {
+                max-height: 200px !important;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+            }
+            
+            /* Compress Annual Summary Table */
+            #annualSummaryTable {
+                font-size: 0.6rem !important;
+                margin: 0 !important;
+            }
+            
+            #annualSummaryTable th,
+            #annualSummaryTable td {
+                padding: 1px 3px !important;
+                line-height: 1.1 !important;
+            }
+            
+            .table-container {
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            
+            /* Aggressively shrink Monthly Pie Chart */
+            #monthlyPieChart {
+                max-height: 200px !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+            }
+            
+            /* Extreme table compression */
+            table {
+                font-size: 0.6rem !important;
+                margin: 0 !important;
+                width: 100%;
+            }
+            
+            th, td {
+                padding: 2px 3px !important;
+                line-height: 1.2 !important;
+            }
+            
+            th {
+                font-size: 0.6rem !important;
+            }
+            
+            /* Remove sorting indicators in print */
+            th::after {
+                content: none !important;
+            }
+            
+            /* Minimize all headers */
+            h1, h2, h3 {
+                font-size: 1rem !important;
+                margin: 2px 0 !important;
+                padding: 0 !important;
+                line-height: 1.1 !important;
+            }
+            
+            /* Remove all unnecessary spacing */
+            br {
+                display: none;
+            }
+            
+            .spacer, .divider {
+                display: none;
+            }
+            
+            /* Force single page for monthly report */
+            #monthlyResults {
+                max-height: none;
+            }
+            
+            /* Hide unnecessary elements */
+            button,
+            .actions {
+                display: none !important;
+            }
+            
+            /* Additional aggressive compression */
+            img {
+                margin: 0 !important;
+            }
+            
+            #monthlyResults > div {
+                margin: 0 !important;
+            }
         }
     </style>
 </head>
@@ -349,7 +507,7 @@
                 <select id="report_type" name="report_type"
                     style="width: 100%; padding: 0.75rem; border-radius: 0.625rem; border: 1px solid var(--border); font-family: inherit; font-size: 0.9375rem;">
                     <option value="weekly">Weekly Report</option>
-                    <option value="monthly" disabled>Monthly Report (Coming Soon)</option>
+                    <option value="monthly">Monthly Report (NEW)</option>
                 </select>
             </div>
 
@@ -368,8 +526,8 @@
             <!-- Monthly date range (hidden by default) -->
             <div id="monthlyDateRange" class="form-group" style="display:none; gap:1rem;">
                 <div style="flex:1">
-                    <label for="report_month">Month</label>
-                    <select id="report_month" name="report_month"
+                    <label for="month">Month</label>
+                    <select id="month" name="month"
                         style="width: 100%; padding: 0.75rem; border-radius: 0.625rem; border: 1px solid var(--border); font-family: inherit; font-size: 0.9375rem;">
                         <option value="1">January</option>
                         <option value="2">February</option>
@@ -386,9 +544,67 @@
                     </select>
                 </div>
                 <div style="flex:1">
-                    <label for="report_year">Year</label>
-                    <input type="number" id="report_year" name="report_year" min="2020" max="2030" value="2026"
+                    <label for="year">Year</label>
+                    <input type="number" id="year" name="year" min="2020" max="2030"
                         style="width: 100%; padding: 0.75rem; border-radius: 0.625rem; border: 1px solid var(--border); font-family: inherit; font-size: 0.9375rem;">
+                </div>
+            </div>
+
+            <!-- SLA Breach Section (Monthly only) -->
+            <div id="slaSection" class="form-group" style="display:none; margin-top:1rem;">
+                <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 0.625rem; padding: 1rem;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.75rem;">
+                        <input type="checkbox" id="includeSla" name="include_sla" style="width: 18px; height: 18px; margin-right: 0.5rem;">
+                        <label for="includeSla" style="margin: 0; font-weight: 600; color: #92400e; text-transform: none; letter-spacing: 0;">
+                            ⚠️ Include SLA Breach Data
+                        </label>
+                    </div>
+                    <div id="slaInputArea" style="display: none;">
+                        <p style="font-size: 0.8rem; color: #92400e; margin-bottom: 1rem;">
+                            Enter SLA breach information from ServiceNow
+                        </p>
+                        <div id="slaList"></div>
+                        <button type="button" id="addSlaBtn" 
+                            style="background: #f59e0b; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; cursor: pointer; margin-top: 0.5rem;">
+                            + Add SLA Breach
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Development Efforts Section (Monthly only) -->
+            <div id="devEffortsSection" class="form-group" style="display:none; margin-top:1rem;">
+                <div style="background: #f3e8ff; border: 1px solid #a855f7; border-radius: 0.625rem; padding: 1rem;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.75rem;">
+                        <input type="checkbox" id="includeDevEfforts" name="include_dev_efforts" style="width: 18px; height: 18px; margin-right: 0.5rem;">
+                        <label for="includeDevEfforts" style="margin: 0; font-weight: 600; color: #7c3aed; text-transform: none; letter-spacing: 0;">
+                            💻 Include Development Efforts Data
+                        </label>
+                    </div>
+                    <div id="devEffortsInputArea" style="display: none;">
+                        <p style="font-size: 0.8rem; color: #7c3aed; margin-bottom: 1rem;">
+                            Enter ME Hours (actual). SOW Planned is fixed at 16 hours.
+                        </p>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; text-transform: none; letter-spacing: 0;">ME Hours (Actual)</label>
+                                <input type="number" id="meHours" step="0.5" min="0" placeholder="e.g. 12.5"
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;"
+                                    oninput="calculateCarryForward()">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; text-transform: none; letter-spacing: 0;">SOW Planned</label>
+                                <input type="number" id="sowPlanned" value="16" readonly
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; background: #f3f4f6; color: #6b7280;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; text-transform: none; letter-spacing: 0;">Carry Forward</label>
+                                <input type="number" id="carryForward" readonly placeholder="Auto-calculated"
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; background: #f3f4f6; color: #6b7280;">
+                            </div>
+                        </div>
+                        <div id="devEffortsStatus" style="margin-top: 0.5rem; font-size: 0.8rem; display: none;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -403,50 +619,143 @@
     <div id="resultArea">
         <div class="summary-card" id="summaryBox"></div>
 
-        <div class="section-title">Weekly Activity (Left Section)</div>
-        <div class="table-container">
-            <table id="leftTable">
-                <thead>
-                    <tr>
-                        <th onclick="handleSort('leftTable', 'Ticket No.')">Ticket #</th>
-                        <th onclick="handleSort('leftTable', 'Request Detail')">Description</th>
-                        <th onclick="handleSort('leftTable', 'Remarks')">Remarks</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <!-- Monthly View Sections -->
+        <div id="monthlyResults" style="display:none;">
+            <div class="summary-card" style="display: block; text-align: center; padding: 1rem;">
+                <img id="annualSummaryChart"
+                    style="width: 100%; height: auto; border-radius: 0.5rem; margin-bottom: 0;">
+                <div class="table-container" style="margin-top: -10px; border: none; box-shadow: none;">
+                    <table id="annualSummaryTable" style="font-size: 1.1rem; width: 100%; border-collapse: collapse;">
+                        <thead id="annualSummaryHead"></thead>
+                        <tbody id="annualSummaryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-title">Monthly ticket distribution</div>
+            <div class="summary-card"
+                style="display: flex; justify-content: center; align-items: center; padding: 2rem;">
+                <img id="monthlyPieChart"
+                    style="max-width: 100%; height: auto; border-radius: 0.5rem; max-height: 700px;">
+            </div>
+
+            <div class="section-title">Monthly KPI Pivot Table</div>
+            <div class="table-container">
+                <table id="monthlyPivotTable" style="font-size: 1rem;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 12px 8px;">Category Type</th>
+                            <th style="padding: 12px 8px;">Sub-Category</th>
+                            <th style="padding: 12px 8px;">TRANS_NON</th>
+                            <th style="padding: 12px 8px;">TRANS_WORK</th>
+                            <th style="padding: 12px 8px;">OPEN</th>
+                            <th style="padding: 12px 8px;">CLOSE</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- SLA Breach Section -->
+            <div id="slaBreachResults" style="display:none;">
+                <div class="section-title">
+                    <span>SLA Breach</span>
+                </div>
+                <div class="table-container">
+                    <table id="slaBreachTable" style="font-size: 1rem;">
+                        <thead>
+                            <tr style="background: #bfdbfe;">
+                                <td style="padding: 12px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600;">Ticket No.</td>
+                                <td style="padding: 12px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600;">Requested for</td>
+                                <td style="padding: 12px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600;">Description</td>
+                                <td style="padding: 12px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600;">Time-Arrive</td>
+                                <td style="padding: 12px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600;">Business elapsed time</td>
+                                <td style="padding: 12px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600;">Remarks</td>
+                            </tr>
+                        </thead>
+                        <tbody id="slaBreachBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Development Efforts Section -->
+            <div id="devEffortsResults" style="display:none;">
+                <div class="section-title">
+                    <span>Development Efforts</span>
+                </div>
+                <div class="table-container" style="overflow-x: auto;">
+                    <table id="devEffortsTable" style="font-size: 0.9rem; min-width: 900px;">
+                        <thead>
+                            <tr style="background: #bfdbfe;">
+                                <td style="padding: 10px 12px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; width: 120px;" id="devEffortsYear">2025</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Jan</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Feb</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Mar</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Apr</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">May</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Jun</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Jul</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Aug</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Sep</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Oct</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Nov</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Dec</td>
+                                <td style="padding: 10px 8px; background: #bfdbfe; color: #1e3a5f; font-weight: 600; text-align: center;">Total</td>
+                            </tr>
+                        </thead>
+                        <tbody id="devEffortsBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <div class="section-title">Weekly Workload Details</div>
-        <div class="table-container">
-            <table id="rightTable">
-                <thead>
-                    <tr>
-                        <th onclick="handleSort('rightTable', 'Ticket No.')">Ticket #</th>
-                        <th onclick="handleSort('rightTable', 'Status')">Status</th>
-                        <th onclick="handleSort('rightTable', 'REQ No.')">REQ No.</th>
-                        <th onclick="handleSort('rightTable', 'Type')">Type</th>
-                        <th onclick="handleSort('rightTable', 'Request Detail')">Description</th>
-                        <th onclick="handleSort('rightTable', 'Requested for')">Requested for</th>
-                        <th onclick="handleSort('rightTable', 'Assign To')">PIC</th>
-                        <th onclick="handleSort('rightTable', 'Time - Arrive')">Received</th>
-                        <th onclick="handleSort('rightTable', 'Time - Close')">Resolved</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+        <!-- Weekly View Sections -->
+        <div id="weeklyResults">
+            <div class="section-title">Weekly Activity (Left Section)</div>
+            <div class="table-container">
+                <table id="leftTable">
+                    <thead>
+                        <tr>
+                            <th onclick="handleSort('leftTable', 'Ticket No.')">Ticket #</th>
+                            <th onclick="handleSort('leftTable', 'Request Detail')">Description</th>
+                            <th onclick="handleSort('leftTable', 'Remarks')">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
 
-        <div class="section-title">New Users</div>
-        <div class="table-container">
-            <table id="newUsersTable">
-                <thead>
-                    <tr id="newUsersTableHead">
-                        <!-- Headers will be dynamically generated -->
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="section-title">Weekly Workload Details</div>
+            <div class="table-container">
+                <table id="rightTable">
+                    <thead>
+                        <tr>
+                            <th onclick="handleSort('rightTable', 'Ticket No.')">Ticket #</th>
+                            <th onclick="handleSort('rightTable', 'Status')">Status</th>
+                            <th onclick="handleSort('rightTable', 'REQ No.')">REQ No.</th>
+                            <th onclick="handleSort('rightTable', 'Type')">Type</th>
+                            <th onclick="handleSort('rightTable', 'Request Detail')">Description</th>
+                            <th onclick="handleSort('rightTable', 'Requested for')">Requested for</th>
+                            <th onclick="handleSort('rightTable', 'Assign To')">PIC</th>
+                            <th onclick="handleSort('rightTable', 'Time - Arrive')">Received</th>
+                            <th onclick="handleSort('rightTable', 'Time - Close')">Resolved</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="section-title">New Users</div>
+            <div class="table-container">
+                <table id="newUsersTable">
+                    <thead>
+                        <tr id="newUsersTableHead">
+                            <!-- Headers will be dynamically generated -->
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -468,30 +777,529 @@
         const reportType = document.getElementById('report_type');
         const weeklyDateRange = document.getElementById('weeklyDateRange');
         const monthlyDateRange = document.getElementById('monthlyDateRange');
+        const slaSection = document.getElementById('slaSection');
+        const devEffortsSection = document.getElementById('devEffortsSection');
+        const includeSla = document.getElementById('includeSla');
+        const includeDevEfforts = document.getElementById('includeDevEfforts');
+        const slaInputArea = document.getElementById('slaInputArea');
+        const devEffortsInputArea = document.getElementById('devEffortsInputArea');
+        const slaList = document.getElementById('slaList');
+        const addSlaBtn = document.getElementById('addSlaBtn');
+        let slaCount = 0;
 
         reportType.addEventListener('change', () => {
             if (reportType.value === 'monthly') {
                 weeklyDateRange.style.display = 'none';
                 monthlyDateRange.style.display = 'flex';
+                slaSection.style.display = 'block';
+                devEffortsSection.style.display = 'block';
                 // Disable weekly date inputs
                 document.getElementById('begin_date').removeAttribute('required');
                 document.getElementById('end_date').removeAttribute('required');
             } else {
                 weeklyDateRange.style.display = 'flex';
                 monthlyDateRange.style.display = 'none';
+                slaSection.style.display = 'none';
+                devEffortsSection.style.display = 'none';
                 // Re-enable weekly date inputs
                 document.getElementById('begin_date').setAttribute('required', 'required');
                 document.getElementById('end_date').setAttribute('required', 'required');
             }
         });
 
+        // Add SLA entry function
+        function addSlaEntry() {
+            slaCount++;
+            const entry = document.createElement('div');
+            entry.id = `sla-entry-${slaCount}`;
+            entry.style.cssText = 'background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem;';
+            entry.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <strong style="color: #1f2937;">SLA Breach #${slaCount}</strong>
+                    <button type="button" onclick="removeSlaEntry(${slaCount})" 
+                        style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 0.8rem;">🗑 Delete</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div>
+                        <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Ticket No.</label>
+                        <input type="text" name="sla_ticket_${slaCount}" 
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Requested for</label>
+                        <input type="text" name="sla_requested_${slaCount}"
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Description</label>
+                        <input type="text" name="sla_description_${slaCount}"
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Percentage</label>
+                        <input type="text" name="sla_percentage_${slaCount}"
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                    </div>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Business elapsed time</label>
+                    <input type="text" name="sla_elapsed_${slaCount}"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Remarks</label>
+                    <textarea name="sla_remarks_${slaCount}" rows="2"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; resize: vertical;"></textarea>
+                </div>
+            `;
+            slaList.appendChild(entry);
+        }
+
+        // Add SLA entry with pre-filled data
+        function addSlaEntryWithData(data) {
+            slaCount++;
+            const entry = document.createElement('div');
+            entry.id = `sla-entry-${slaCount}`;
+            entry.dataset.savedId = data.id || '';
+            entry.style.cssText = 'background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem;';
+            entry.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <strong style="color: #1f2937;">SLA Breach #${slaCount}</strong>
+                    <button type="button" onclick="removeSlaEntry(${slaCount})" 
+                        style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 0.8rem;">🗑 Delete</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div>
+                        <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Ticket No.</label>
+                        <input type="text" name="sla_ticket_${slaCount}" value="${data.ticket_no || ''}"
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Requested for</label>
+                        <input type="text" name="sla_requested_${slaCount}" value="${data.requested_for || ''}"
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Description</label>
+                        <input type="text" name="sla_description_${slaCount}" value="${data.description || ''}"
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Percentage</label>
+                        <input type="text" name="sla_percentage_${slaCount}" value="${data.percentage || ''}"
+                            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                    </div>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Business elapsed time</label>
+                    <input type="text" name="sla_elapsed_${slaCount}" value="${data.elapsed_time || ''}"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="font-size: 0.75rem; color: #6b7280; text-transform: none;">Remarks</label>
+                    <textarea name="sla_remarks_${slaCount}" rows="2"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; resize: vertical;">${data.remarks || ''}</textarea>
+                </div>
+            `;
+            slaList.appendChild(entry);
+        }
+
+        // Load saved SLA data for the selected month
+        async function loadSavedSlaData() {
+            const year = document.getElementById('year')?.value;
+            const month = document.getElementById('month')?.value;
+            if (!year || !month) return;
+            
+            try {
+                const response = await fetch(`/api/sla/${year}/${month}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.breaches && data.breaches.length > 0) {
+                        // Clear existing entries
+                        slaList.innerHTML = '';
+                        slaCount = 0;
+                        // Add saved entries
+                        data.breaches.forEach(breach => {
+                            addSlaEntryWithData(breach);
+                        });
+                        console.log('Loaded', data.breaches.length, 'saved SLA entries');
+                    }
+                }
+            } catch (err) {
+                console.log('No saved SLA data found');
+            }
+        }
+
+        // Save SLA data
+        async function saveSlaData() {
+            const year = document.getElementById('year')?.value;
+            const month = document.getElementById('month')?.value;
+            if (!year || !month) return;
+            
+            const ticketInputs = document.querySelectorAll('[name^="sla_ticket_"]');
+            const breaches = [];
+            
+            ticketInputs.forEach((ticketInput) => {
+                const entryNum = ticketInput.name.replace('sla_ticket_', '');
+                const ticket = ticketInput.value || '';
+                if (ticket.trim()) {
+                    breaches.push({
+                        ticket_no: ticket,
+                        requested_for: document.querySelector(`[name="sla_requested_${entryNum}"]`)?.value || '',
+                        description: document.querySelector(`[name="sla_description_${entryNum}"]`)?.value || '',
+                        percentage: document.querySelector(`[name="sla_percentage_${entryNum}"]`)?.value || '',
+                        elapsed_time: document.querySelector(`[name="sla_elapsed_${entryNum}"]`)?.value || '',
+                        remarks: document.querySelector(`[name="sla_remarks_${entryNum}"]`)?.value || ''
+                    });
+                }
+            });
+            
+            if (breaches.length > 0) {
+                try {
+                    await fetch(`/api/sla/${year}/${month}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ year: parseInt(year), month: parseInt(month), breaches })
+                    });
+                    console.log('SLA data saved');
+                } catch (err) {
+                    console.error('Failed to save SLA data:', err);
+                }
+            }
+        }
+
+        // Remove SLA entry function
+        window.removeSlaEntry = function(id) {
+            const entry = document.getElementById(`sla-entry-${id}`);
+            if (entry) entry.remove();
+        };
+
+        // Add SLA button click
+        addSlaBtn.addEventListener('click', addSlaEntry);
+
+        // Load saved SLA data when month/year changes
+        document.getElementById('month').addEventListener('change', () => {
+            loadSavedSlaData();
+            checkExistingDataAndNotify();
+        });
+        document.getElementById('year').addEventListener('change', () => {
+            loadSavedSlaData();
+            checkExistingDataAndNotify();
+        });
+
+        // Load saved data when SLA checkbox is checked
+        includeSla.addEventListener('change', () => {
+            slaInputArea.style.display = includeSla.checked ? 'block' : 'none';
+            if (includeSla.checked) {
+                loadSavedSlaData().then(() => {
+                    if (slaList.children.length === 0) {
+                        addSlaEntry();
+                    }
+                });
+            }
+        });
+
+        // 既存データ確認・通知機能
+        async function checkExistingDataAndNotify() {
+            const year = document.getElementById('year')?.value;
+            const month = document.getElementById('month')?.value;
+            if (!year || !month) return;
+
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+            let hasSlaData = false;
+            let hasDevData = false;
+
+            // Check SLA data
+            try {
+                const slaResponse = await fetch(`/api/sla/${year}/${month}`);
+                if (slaResponse.ok) {
+                    const slaData = await slaResponse.json();
+                    hasSlaData = slaData && slaData.breaches && slaData.breaches.length > 0;
+                }
+            } catch (e) {
+                // No SLA data
+            }
+
+            // Check Dev Efforts data
+            try {
+                const devResponse = await fetch(`/api/dev-efforts/${monthKey}`);
+                if (devResponse.ok) {
+                    const devData = await devResponse.json();
+                    hasDevData = devData && devData.me_hours !== undefined && devData.me_hours !== null;
+                }
+            } catch (e) {
+                // No Dev data
+            }
+
+            // Update UI to show data status
+            updateDataExistenceIndicators(hasSlaData, hasDevData);
+        }
+
+        // UI更新：既存データの存在を表示
+        function updateDataExistenceIndicators(hasSlaData, hasDevData) {
+            const slaLabel = document.querySelector('label[for="includeSla"]');
+            const devLabel = document.querySelector('label[for="includeDevEfforts"]');
+
+            if (hasSlaData) {
+                slaLabel.innerHTML = '⚠️ Include SLA Breach Data <span style="color: #059669; font-size: 0.75rem; margin-left: 0.5rem;">✓ Data exists - will be included in report</span>';
+            } else {
+                slaLabel.innerHTML = '⚠️ Include SLA Breach Data';
+            }
+
+            if (hasDevData) {
+                devLabel.innerHTML = '💻 Include Development Efforts Data <span style="color: #059669; font-size: 0.75rem; margin-left: 0.5rem;">✓ Data exists - will be included in report</span>';
+            } else {
+                devLabel.innerHTML = '💻 Include Development Efforts Data';
+            }
+        }
+
+        // ========================================
+        // Development Efforts Functions
+        // ========================================
+        
+        function calculateCarryForward() {
+            const meHours = parseFloat(document.getElementById('meHours').value) || 0;
+            const sowPlanned = 16;
+            const carryForward = sowPlanned - meHours;
+            document.getElementById('carryForward').value = carryForward.toFixed(1);
+        }
+        
+        async function saveDevEfforts() {
+            const year = document.getElementById('year')?.value;
+            const month = document.getElementById('month')?.value;
+            if (!year || !month) {
+                showDevEffortsStatus('Please select month and year first', 'error');
+                return;
+            }
+            
+            const meHoursInput = document.getElementById('meHours').value;
+            // Check if input is empty (not entered) - 0 is a valid value
+            if (meHoursInput === '' || meHoursInput === null) {
+                return; // Skip saving if no value entered
+            }
+            
+            const meHours = parseFloat(meHoursInput);
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+            
+            const data = {
+                month: monthKey,
+                me_hours: meHours,
+                sow_planned: 16.0,
+                carry_forward: 16.0 - meHours
+            };
+            
+            try {
+                const response = await fetch('/api/dev-efforts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    showDevEffortsStatus('Development Efforts data saved', 'success');
+                } else {
+                    showDevEffortsStatus('Failed to save', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showDevEffortsStatus('Save error: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadSavedDevEfforts() {
+            const year = document.getElementById('year')?.value;
+            const month = document.getElementById('month')?.value;
+            if (!year || !month) return;
+            
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+            
+            try {
+                const response = await fetch(`/api/dev-efforts/${monthKey}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data) {
+                        document.getElementById('meHours').value = data.me_hours;
+                        document.getElementById('carryForward').value = data.carry_forward;
+                        showDevEffortsStatus('Loaded saved data', 'info');
+                    } else {
+                        document.getElementById('meHours').value = '';
+                        document.getElementById('carryForward').value = '';
+                        showDevEffortsStatus('No data for this month', 'info');
+                    }
+                }
+            } catch (error) {
+                console.error('Load error:', error);
+            }
+        }
+        
+        function showDevEffortsStatus(message, type) {
+            const statusEl = document.getElementById('devEffortsStatus');
+            statusEl.style.display = 'block';
+            statusEl.style.color = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#2563eb';
+            statusEl.textContent = message;
+            setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+        }
+        
+        // Dev Efforts checkbox listener
+        includeDevEfforts.addEventListener('change', () => {
+            devEffortsInputArea.style.display = includeDevEfforts.checked ? 'block' : 'none';
+            if (includeDevEfforts.checked) {
+                loadSavedDevEfforts();
+            }
+        });
+        
+        // Reload dev efforts data when month/year changes
+        document.getElementById('month').addEventListener('change', () => {
+            if (includeDevEfforts.checked) loadSavedDevEfforts();
+            checkExistingDataAndNotify();
+        });
+        document.getElementById('year').addEventListener('change', () => {
+            if (includeDevEfforts.checked) loadSavedDevEfforts();
+            checkExistingDataAndNotify();
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await runReport('/generate', 'json');
+            // Save SLA data before generating report (only if checkbox is checked)
+            if (includeSla.checked) {
+                await saveSlaData();
+            }
+            // Save Dev Efforts data before generating report (only if checkbox is checked)
+            if (includeDevEfforts.checked) {
+                await saveDevEfforts();
+            }
+            // Note: Backend will auto-load existing data regardless of checkbox state
+            const type = reportType.value;
+            const endpoint = type === 'monthly' ? '/monthly/process' : '/generate';
+            await runReport(endpoint, 'json');
+        });
+
+        // ページ読み込み時に既存データを確認
+        window.addEventListener('load', () => {
+            setTimeout(() => checkExistingDataAndNotify(), 500);
         });
 
         pdfBtn.addEventListener('click', async () => {
-            await runReport('/pdf', 'blob');
+            const type = reportType.value;
+            const endpoint = type === 'monthly' ? '/monthly/pdf' : '/pdf'; // Monthly PDF not yet implemented
+            await runReport(endpoint, 'blob');
+        });
+
+        // 既存データ確認・通知機能
+        async function checkExistingDataAndNotify() {
+            const year = document.getElementById('year')?.value;
+            const month = document.getElementById('month')?.value;
+            if (!year || !month) return;
+
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+            let hasSlaData = false;
+            let hasDevData = false;
+
+            // Check SLA data
+            try {
+                const slaResponse = await fetch(`/api/sla/${year}/${month}`);
+                if (slaResponse.ok) {
+                    const slaData = await slaResponse.json();
+                    hasSlaData = slaData && slaData.breaches && slaData.breaches.length > 0;
+                }
+            } catch (e) {
+                // No SLA data
+            }
+
+            // Check Dev Efforts data
+            try {
+                const devResponse = await fetch(`/api/dev-efforts/${monthKey}`);
+                if (devResponse.ok) {
+                    const devData = await devResponse.json();
+                    hasDevData = devData && devData.me_hours !== undefined && devData.me_hours !== null;
+                }
+            } catch (e) {
+                // No Dev data
+            }
+
+            // Update UI to show data status
+            updateDataExistenceIndicators(hasSlaData, hasDevData);
+        }
+
+        // UI更新：既存データの存在を表示
+        function updateDataExistenceIndicators(hasSlaData, hasDevData) {
+            const slaLabel = document.querySelector('label[for="includeSla"]');
+            const devLabel = document.querySelector('label[for="includeDevEfforts"]');
+
+            if (hasSlaData) {
+                slaLabel.innerHTML = '⚠️ Include SLA Breach Data <span style="color: #059669; font-size: 0.75rem; margin-left: 0.5rem;">✓ Data exists - will be included in report</span>';
+            } else {
+                slaLabel.innerHTML = '⚠️ Include SLA Breach Data';
+            }
+
+            if (hasDevData) {
+                devLabel.innerHTML = '💻 Include Development Efforts Data <span style="color: #059669; font-size: 0.75rem; margin-left: 0.5rem;">✓ Data exists - will be included in report</span>';
+            } else {
+                devLabel.innerHTML = '💻 Include Development Efforts Data';
+            }
+        }
+
+        // ページ読み込み時に既存データを確認
+        window.addEventListener('load', () => {
+            setTimeout(() => checkExistingDataAndNotify(), 500);
+        });
+
+        // 既存データ確認・通知機能
+        async function checkExistingDataAndNotify() {
+            const year = document.getElementById('year')?.value;
+            const month = document.getElementById('month')?.value;
+            if (!year || !month) return;
+
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+            let hasSlaData = false;
+            let hasDevData = false;
+
+            // Check SLA data
+            try {
+                const slaResponse = await fetch(`/api/sla/${year}/${month}`);
+                if (slaResponse.ok) {
+                    const slaData = await slaResponse.json();
+                    hasSlaData = slaData && slaData.breaches && slaData.breaches.length > 0;
+                }
+            } catch (e) {
+                // No SLA data
+            }
+
+            // Check Dev Efforts data
+            try {
+                const devResponse = await fetch(`/api/dev-efforts/${monthKey}`);
+                if (devResponse.ok) {
+                    const devData = await devResponse.json();
+                    hasDevData = devData && devData.me_hours !== undefined && devData.me_hours !== null;
+                }
+            } catch (e) {
+                // No Dev data
+            }
+
+            // Update UI to show data status
+            updateDataExistenceIndicators(hasSlaData, hasDevData);
+        }
+
+        // UI更新：既存データの存在を表示
+        function updateDataExistenceIndicators(hasSlaData, hasDevData) {
+            const slaLabel = document.querySelector('label[for="includeSla"]');
+            const devLabel = document.querySelector('label[for="includeDevEfforts"]');
+
+            if (hasSlaData) {
+                slaLabel.innerHTML = '⚠️ Include SLA Breach Data <span style="color: #059669; font-size: 0.75rem; margin-left: 0.5rem;">✓ Data exists - will be included in report</span>';
+            } else {
+                slaLabel.innerHTML = '⚠️ Include SLA Breach Data';
+            }
+
+            if (hasDevData) {
+                devLabel.innerHTML = '💻 Include Development Efforts Data <span style="color: #059669; font-size: 0.75rem; margin-left: 0.5rem;">✓ Data exists - will be included in report</span>';
+            } else {
+                devLabel.innerHTML = '💻 Include Development Efforts Data';
+            }
+        }
+
+        // ページ読み込み時に既存データを確認
+        window.addEventListener('load', () => {
+            setTimeout(() => checkExistingDataAndNotify(), 500);
         });
 
         async function runReport(endpoint, type) {
@@ -507,13 +1315,20 @@
                 const response = await fetch(endpoint, { method: 'POST', body: formData });
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.detail.message || 'Operation failed');
+                    throw new Error(err.detail || err.message || 'Operation failed');
                 }
 
                 if (type === 'json') {
                     currentData = await response.json();
-                    displayResult();
-                    pdfBtn.disabled = false;
+                    const reportTypeVal = reportType.value;
+
+                    if (reportTypeVal === 'monthly') {
+                        displayMonthlyResult();
+                    } else {
+                        displayWeeklyResult();
+                    }
+
+                    pdfBtn.disabled = false; // PDF enabled for both weekly and monthly
                     status.style.display = 'none';
                 } else {
                     const blob = await response.blob();
@@ -534,16 +1349,11 @@
             }
         }
 
-        function displayResult() {
+        function displayWeeklyResult() {
             if (!currentData) return;
             resultArea.style.display = 'block';
-
-            // Debug logging
-            console.log('=== displayResult Called ===');
-            console.log('Current Data:', currentData);
-            console.log('new_users_section:', currentData.new_users_section);
-            console.log('new_users_section type:', Array.isArray(currentData.new_users_section));
-            console.log('new_users_section length:', currentData.new_users_section ? currentData.new_users_section.length : 'undefined');
+            document.getElementById('weeklyResults').style.display = 'block';
+            document.getElementById('monthlyResults').style.display = 'none';
 
             const fmt = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
 
@@ -563,6 +1373,359 @@
                 </div>
             `;
 
+            // Rest of weekly rendering...
+            renderWeeklyTables();
+        }
+
+        function displayMonthlyResult() {
+            if (!currentData) return;
+            resultArea.style.display = 'block';
+            document.getElementById('weeklyResults').style.display = 'none';
+            document.getElementById('monthlyResults').style.display = 'block';
+
+            // Summary
+            document.getElementById('summaryBox').innerHTML = `
+                <div class="summary-item">
+                    <span class="summary-label">Monthly Summary</span>
+                    <span class="summary-value">${currentData.year} / ${String(currentData.month).padStart(2, '0')}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Volume</span>
+                    <span class="summary-value">${currentData.summary.total_tickets}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Closed tickets</span>
+                    <span class="summary-value" style="color: #10b981;">${currentData.summary.closed_tickets}</span>
+                </div>
+            `;
+
+            // Charts
+            // Add cache-busting timestamp to ensure images refresh
+            const ts = new Date().getTime();
+            document.getElementById('annualSummaryChart').src = `${currentData.charts.bar}?t=${ts}`;
+            document.getElementById('monthlyPieChart').src = `${currentData.charts.pie}?t=${ts}`;
+
+            // Annual Summary Table (Data under the graph)
+            if (currentData.annual_summary) {
+                const as = currentData.annual_summary;
+                const head = document.getElementById('annualSummaryHead');
+                const body = document.getElementById('annualSummaryBody');
+
+                // Head
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                // グラフの左マージンに合わせるため、Category列の幅を計算
+                let headHtml = '<tr><th style="width: 12%; text-align: left; padding: 15px 10px; color: var(--text-light); border-bottom: 2px solid var(--border);">Category</th>';
+                months.forEach(m => headHtml += `<th style="width: 7.3%; text-align: center; padding: 15px 5px; color: var(--text-light); border-bottom: 2px solid var(--border);">${m}</th>`);
+                headHtml += '</tr>';
+                head.innerHTML = headHtml;
+
+                // Body
+                body.innerHTML = '';
+                as.categories.forEach(cat => {
+                    const rowData = as.data[cat] || Array(12).fill(0);
+                    let rowHtml = `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="text-align:left; font-weight:700; padding: 15px 10px; color: var(--primary);">${cat}</td>`;
+                    rowData.forEach(val => {
+                        const cellColor = val > 0 ? 'var(--text)' : '#cbd5e1';
+                        const fontWeight = val > 0 ? '700' : '400';
+                        rowHtml += `<td style="text-align: center; padding: 15px 5px; color: ${cellColor}; font-weight: ${fontWeight};">${val}</td>`;
+                    });
+                    rowHtml += `</tr>`;
+                    body.insertAdjacentHTML('beforeend', rowHtml);
+                });
+
+                // (Grand Total Row Removed per User Request)
+            }
+
+            // Pivot Table
+            const tbody = document.querySelector('#monthlyPivotTable tbody');
+            tbody.innerHTML = '';
+
+            // pivot_data is { "(Incident, Reset password)": { ... }, ... }
+            const entries = Object.entries(currentData.pivot_data);
+            entries.sort(); // Sort by Type then Category
+
+            entries.forEach(([key, values]) => {
+                const [type, cat] = key.split('|').map(s => s.trim());
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:600; color:var(--primary); padding: 12px 8px;">${type}</td>
+                    <td style="padding: 12px 8px;">${cat}</td>
+                    <td style="padding: 12px 8px;">${values.TRANS_NON || 0}</td>
+                    <td style="padding: 12px 8px;">${values.TRANS_WORK || 0}</td>
+                    <td style="padding: 12px 8px;">${values.OPEN || 0}</td>
+                    <td style="font-weight:600; color:#10b981; padding: 12px 8px;">${values.CLOSE || 0}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // SLA Breach Section - Display if checkbox is checked
+            displaySlaBreachResults();
+            // Development Efforts Section - Display if checkbox is checked
+            displayDevEffortsResults();
+        }
+
+        function displaySlaBreachResults() {
+            const slaBreachSection = document.getElementById('slaBreachResults');
+            const slaBreachBody = document.getElementById('slaBreachBody');
+            const includeSlaCheckbox = document.getElementById('includeSla');
+            
+            console.log('displaySlaBreachResults called');
+            
+            // Clear previous data
+            slaBreachBody.innerHTML = '';
+            
+            let slaData = [];
+            
+            // Priority 1: Use data from currentData (backend auto-loaded data)
+            if (currentData && currentData.sla_data && currentData.sla_data.length > 0) {
+                console.log('Using auto-loaded SLA data from backend:', currentData.sla_data.length, 'entries');
+                slaData = currentData.sla_data;
+            } 
+            // Priority 2: If checkbox is checked, collect from form inputs
+            else if (includeSlaCheckbox && includeSlaCheckbox.checked) {
+                console.log('Checkbox checked, collecting from form inputs');
+                const ticketInputs = document.querySelectorAll('[name^="sla_ticket_"]');
+                
+                ticketInputs.forEach((ticketInput) => {
+                    const entryNum = ticketInput.name.replace('sla_ticket_', '');
+                    const ticket = ticketInput.value || '';
+                    const requested = document.querySelector(`[name="sla_requested_${entryNum}"]`)?.value || '';
+                    const description = document.querySelector(`[name="sla_description_${entryNum}"]`)?.value || '';
+                    const percentage = document.querySelector(`[name="sla_percentage_${entryNum}"]`)?.value || '';
+                    const elapsed = document.querySelector(`[name="sla_elapsed_${entryNum}"]`)?.value || '';
+                    const remarks = document.querySelector(`[name="sla_remarks_${entryNum}"]`)?.value || '';
+                    
+                    // Only add if ticket number is filled
+                    if (ticket.trim()) {
+                        slaData.push({
+                            ticket_no: ticket,
+                            requested_for: requested,
+                            description: description,
+                            percentage: percentage,
+                            elapsed_time: elapsed,
+                            remarks: remarks
+                        });
+                    }
+                });
+            }
+            
+            console.log('Final SLA data:', slaData);
+            
+            // If no SLA data, hide section
+            if (slaData.length === 0) {
+                slaBreachSection.style.display = 'none';
+                console.log('No SLA data, hiding section');
+                return;
+            }
+            
+            // Display SLA data
+            slaBreachSection.style.display = 'block';
+            console.log('Showing SLA section with', slaData.length, 'entries');
+            
+            // Get current date for Time-Arrive
+            const now = new Date();
+            const year = document.getElementById('year')?.value || now.getFullYear();
+            const month = document.getElementById('month')?.value || (now.getMonth() + 1);
+            
+            slaData.forEach(sla => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 12px 8px; font-weight: 500;">${sla.ticket_no || sla.ticket || ''}</td>
+                    <td style="padding: 12px 8px;">${sla.requested_for || sla.requested || ''}</td>
+                    <td style="padding: 12px 8px;">${sla.description || ''}</td>
+                    <td style="padding: 12px 8px; text-align: center;">${year}/${month}/27<br>11:41</td>
+                    <td style="padding: 12px 8px;">${sla.elapsed_time || sla.elapsed || ''}${sla.percentage ? '(' + sla.percentage + '%)' : ''}</td>
+                    <td style="padding: 12px 8px;">${sla.remarks || ''}</td>
+                `;
+                slaBreachBody.appendChild(tr);
+            });
+        }
+
+        function displayDevEffortsResults() {
+            const devEffortsSection = document.getElementById('devEffortsResults');
+            const devEffortsBody = document.getElementById('devEffortsBody');
+            const includeDevEffortsCheckbox = document.getElementById('includeDevEfforts');
+            
+            console.log('displayDevEffortsResults called');
+            
+            // Clear previous data
+            devEffortsBody.innerHTML = '';
+            
+            // Get current year and month
+            const year = document.getElementById('year')?.value || new Date().getFullYear();
+            const currentMonth = parseInt(document.getElementById('month')?.value) || (new Date().getMonth() + 1);
+            
+            // Update year header
+            document.getElementById('devEffortsYear').textContent = year;
+            
+            // Priority 1: Use data from currentData (backend auto-loaded data)
+            if (currentData && currentData.dev_efforts_data && Object.keys(currentData.dev_efforts_data).length > 0) {
+                console.log('Using auto-loaded Dev Efforts data from backend:', Object.keys(currentData.dev_efforts_data).length, 'months');
+                displayDevEffortsFromBackendData(currentData.dev_efforts_data, year);
+            }
+            // Priority 2: If checkbox is checked, fetch from API
+            else if (includeDevEffortsCheckbox && includeDevEffortsCheckbox.checked) {
+                console.log('Checkbox checked, fetching Dev Efforts from API');
+                fetchYearDevEfforts(year, currentMonth);
+            }
+            // No data available
+            else {
+                devEffortsSection.style.display = 'none';
+                console.log('No Dev Efforts data available');
+            }
+        }
+        
+        function displayDevEffortsFromBackendData(devData, year) {
+            const devEffortsSection = document.getElementById('devEffortsResults');
+            const devEffortsBody = document.getElementById('devEffortsBody');
+            
+            // Initialize data arrays for 12 months
+            const meHoursData = new Array(12).fill(null);
+            const sowPlannedData = new Array(12).fill(16);
+            const carryForwardData = new Array(12).fill(null);
+            
+            // Populate from backend data
+            for (let m = 1; m <= 12; m++) {
+                if (devData[m]) {
+                    meHoursData[m - 1] = devData[m].me_hours;
+                    carryForwardData[m - 1] = devData[m].carry_forward;
+                }
+            }
+            
+            // Calculate totals
+            let meTotal = 0, sowTotal = 0, cfTotal = 0;
+            meHoursData.forEach(v => { if (v !== null) meTotal += parseFloat(v) || 0; });
+            sowPlannedData.forEach(v => sowTotal += v);
+            carryForwardData.forEach(v => { if (v !== null) cfTotal += parseFloat(v) || 0; });
+            
+            // Display section
+            devEffortsSection.style.display = 'block';
+            
+            // ME Hours row
+            const tr1 = document.createElement('tr');
+            let meRowHtml = '<td style="padding: 10px 12px; font-weight: 500; border-bottom: 1px solid #e5e7eb;">ME Hours</td>';
+            meHoursData.forEach(v => {
+                const displayVal = (v !== null && v !== undefined) ? v : '';
+                meRowHtml += `<td style="padding: 10px 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${displayVal}</td>`;
+            });
+            meRowHtml += `<td style="padding: 10px 8px; text-align: center; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${meTotal}</td>`;
+            tr1.innerHTML = meRowHtml;
+            devEffortsBody.appendChild(tr1);
+            
+            // SOW Planned row
+            const tr2 = document.createElement('tr');
+            let sowRowHtml = '<td style="padding: 10px 12px; font-weight: 500; border-bottom: 1px solid #e5e7eb;">SOW Planned</td>';
+            sowPlannedData.forEach(v => {
+                sowRowHtml += `<td style="padding: 10px 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${v}</td>`;
+            });
+            sowRowHtml += `<td style="padding: 10px 8px; text-align: center; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${sowTotal}</td>`;
+            tr2.innerHTML = sowRowHtml;
+            devEffortsBody.appendChild(tr2);
+            
+            // Carry Forward row
+            const tr3 = document.createElement('tr');
+            let cfRowHtml = '<td style="padding: 10px 12px; font-weight: 500;">Carry Forward</td>';
+            carryForwardData.forEach(v => {
+                if (v !== null && v !== undefined) {
+                    const cfVal = parseFloat(v);
+                    const color = cfVal >= 0 ? '#16a34a' : '#dc2626';
+                    cfRowHtml += `<td style="padding: 10px 8px; text-align: center; color: ${color};">${v}</td>`;
+                } else {
+                    cfRowHtml += `<td style="padding: 10px 8px; text-align: center;"></td>`;
+                }
+            });
+            const cfColor = cfTotal >= 0 ? '#16a34a' : '#dc2626';
+            cfRowHtml += `<td style="padding: 10px 8px; text-align: center; font-weight: 600; color: ${cfColor};">${cfTotal || ''}</td>`;
+            tr3.innerHTML = cfRowHtml;
+            devEffortsBody.appendChild(tr3);
+        }
+        
+        async function fetchYearDevEfforts(year, currentMonth) {
+            const devEffortsSection = document.getElementById('devEffortsResults');
+            const devEffortsBody = document.getElementById('devEffortsBody');
+            
+            // Get current input values for the selected month
+            const currentMeHoursInput = document.getElementById('meHours')?.value;
+            const currentCarryForward = document.getElementById('carryForward')?.value || '';
+            
+            // Initialize data arrays for 12 months (null means no data)
+            const meHoursData = new Array(12).fill(null);
+            const sowPlannedData = new Array(12).fill(16);
+            const carryForwardData = new Array(12).fill(null);
+            
+            // Fetch saved data for each month
+            for (let m = 1; m <= 12; m++) {
+                const monthKey = `${year}-${String(m).padStart(2, '0')}`;
+                try {
+                    const response = await fetch(`/api/dev-efforts/${monthKey}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data && data.me_hours !== undefined && data.me_hours !== null) {
+                            meHoursData[m - 1] = data.me_hours;
+                            carryForwardData[m - 1] = data.carry_forward;
+                        }
+                    }
+                } catch (err) {
+                    console.log('No data for', monthKey);
+                }
+            }
+            
+            // Override current month with input values if provided (including 0)
+            if (currentMeHoursInput !== '' && currentMeHoursInput !== null && currentMeHoursInput !== undefined) {
+                meHoursData[currentMonth - 1] = parseFloat(currentMeHoursInput);
+                carryForwardData[currentMonth - 1] = parseFloat(currentCarryForward);
+            }
+            
+            // Calculate totals
+            let meTotal = 0, sowTotal = 0, cfTotal = 0;
+            meHoursData.forEach(v => { if (v !== null) meTotal += parseFloat(v) || 0; });
+            sowPlannedData.forEach(v => sowTotal += v);
+            carryForwardData.forEach(v => { if (v !== null) cfTotal += parseFloat(v) || 0; });
+            
+            // Display section
+            devEffortsSection.style.display = 'block';
+            
+            // ME Hours row
+            const tr1 = document.createElement('tr');
+            let meRowHtml = '<td style="padding: 10px 12px; font-weight: 500; border-bottom: 1px solid #e5e7eb;">ME Hours</td>';
+            meHoursData.forEach(v => {
+                const displayVal = (v !== null && v !== undefined) ? v : '';
+                meRowHtml += `<td style="padding: 10px 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${displayVal}</td>`;
+            });
+            meRowHtml += `<td style="padding: 10px 8px; text-align: center; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${meTotal}</td>`;
+            tr1.innerHTML = meRowHtml;
+            devEffortsBody.appendChild(tr1);
+            
+            // SOW Planned row
+            const tr2 = document.createElement('tr');
+            let sowRowHtml = '<td style="padding: 10px 12px; font-weight: 500; border-bottom: 1px solid #e5e7eb;">SOW Planned</td>';
+            sowPlannedData.forEach(v => {
+                sowRowHtml += `<td style="padding: 10px 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${v}</td>`;
+            });
+            sowRowHtml += `<td style="padding: 10px 8px; text-align: center; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${sowTotal}</td>`;
+            tr2.innerHTML = sowRowHtml;
+            devEffortsBody.appendChild(tr2);
+            
+            // Carry Forward row
+            const tr3 = document.createElement('tr');
+            let cfRowHtml = '<td style="padding: 10px 12px; font-weight: 500;">Carry Forward</td>';
+            carryForwardData.forEach(v => {
+                if (v !== null && v !== undefined) {
+                    const cfVal = parseFloat(v);
+                    const color = cfVal >= 0 ? '#16a34a' : '#dc2626';
+                    cfRowHtml += `<td style="padding: 10px 8px; text-align: center; color: ${color};">${v}</td>`;
+                } else {
+                    cfRowHtml += `<td style="padding: 10px 8px; text-align: center;"></td>`;
+                }
+            });
+            const cfTotalColor = cfTotal >= 0 ? '#16a34a' : '#dc2626';
+            cfRowHtml += `<td style="padding: 10px 8px; text-align: center; font-weight: 600; color: ${cfTotalColor};">${cfTotal}</td>`;
+            tr3.innerHTML = cfRowHtml;
+            devEffortsBody.appendChild(tr3);
+        }
+
+        function renderWeeklyTables() {
             // Tables
             const leftTicketNos = new Set(currentData.left_section.map(t => t['Ticket No.']));
 
@@ -714,6 +1877,13 @@
         };
         document.getElementById('begin_date').value = toLocalISO(start);
         document.getElementById('end_date').value = toLocalISO(end);
+
+        // Set default month/year to previous month
+        const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const prevMonth = prevMonthDate.getMonth() + 1; // 1-12
+        const prevYear = prevMonthDate.getFullYear();
+        document.getElementById('month').value = prevMonth;
+        document.getElementById('year').value = prevYear;
     </script>
 </body>
 

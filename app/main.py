@@ -3,6 +3,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import os
 from app.api.report import router as report_router
+from app.api.monthly_report import router as monthly_router
+from app.api.sla_data import router as sla_router
+from app.api.dev_efforts import router as dev_efforts_router
 
 app = FastAPI()
 
@@ -27,4 +30,7 @@ def health():
 
 
 app.include_router(report_router)
+app.include_router(monthly_router)
+app.include_router(sla_router)
+app.include_router(dev_efforts_router)
 
