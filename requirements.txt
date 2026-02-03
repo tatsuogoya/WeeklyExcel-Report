@@ -1,10 +1,4 @@
-fastapi
-uvicorn
+streamlit
 pandas
 openpyxl
-python-multipart
-pytest
-httpx
-reportlab
-matplotlib
-numpy
+python-dateutil

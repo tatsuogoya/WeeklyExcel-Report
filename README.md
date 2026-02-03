@@ -1,123 +1,67 @@
-# IFS AMS Workload Summary
+# 📊 IFS Weekly Report Generator
 
-## Overview
+A Streamlit web application for generating weekly ServiceNow reports for NAFTA Marelli USA.
 
-This project generates a **Weekly ServiceNow Report** from daily ticket data
-stored in **NA Daily work.xlsx**.
+## 🚀 Features
 
-Users upload an Excel file, select a report period,
-view the report on a web page, and download it as a **PDF**.
+- 📁 Upload Excel files (NA Daily work.xlsx and Template)
+- 📅 Select date range for report generation
+- 📊 Automatic ticket and user data processing
+- 📥 Download generated reports
+- 🎨 Formatted Excel output with styling and auto-filters
 
----
+## 🌐 Live Demo
 
-## Features (MVP)
+**App URL**: [Coming Soon]
 
-- Web-based UI
-- Excel upload (`.xlsx`)
-- Begin Date / End Date selection
-- Weekly report displayed on screen
-- PDF download
-- Excel export (Legacy support)
-- Clear validation and error messages
+## 🛠️ Local Development
 
----
+### Prerequisites
 
-## Tech Stack
+- Python 3.8+
+- pip
 
-- Backend: Python + FastAPI
-- Excel Processing: pandas, openpyxl
-- PDF: reportlab
-- Testing: pytest
+### Installation
 
----
+```bash
+# Clone the repository
+git clone https://github.com/tatsuogoya/IFS-Weekly-Report.git
+cd IFS-Weekly-Report
 
-## Input File
+# Install dependencies
+pip install -r requirements.txt
 
-### NA Daily work.xlsx
+# Run the app
+streamlit run app.py
+```
 
-- Year-based sheets (e.g. `2025`, `2026`)
-- Special sheet: `New Users` (optional, shows all records regardless of date filter)
-- Required columns (for year sheets):
+## 📖 Usage
 
-| Column |
-|------|
-| Date |
-| Ticket No. |
-| REQ No. |
-| Type |
-| Requested for |
-| Assign To |
-| Request Detail |
-| Time - Arrive |
-| Time - Close |
-| Status |
-| Remarks |
+1. **Upload Source Data**: Upload your `NA Daily work.xlsx` file
+2. **Upload Template**: Upload the `SNOW_report_Template.xlsx` file
+3. **Select Date**: Choose a reference date for the report
+4. **Generate**: Click "Generate Report" button
+5. **Download**: Download the generated Excel report
 
----
+## 📋 Requirements
 
-## Report Logic
+- streamlit
+- pandas
+- openpyxl
+- python-dateutil
 
-### Summary (Header)
-- Date range: begin_date ～ end_date
-- open_count: All OPEN tickets (any date)
-- closed_count: CLOSE tickets with Time - Close within date range
-- Processes current year + previous year sheets only
+## 🔒 Privacy
 
----
+This app is **public** and can be accessed by anyone with the URL. No sensitive data is stored on the server.
 
-### Weekly Activity (Left Section)
-- All OPEN tickets (no date filtering)
-- Columns: Ticket #, Description
-- Sorted by Received → Ticket No.
+## 📝 License
 
----
+For internal use at NAFTA Marelli USA.
 
-### Weekly Workload Details (Right Section)
-- All OPEN tickets (any date) + CLOSE tickets with Time - Close in range
-- Columns: Ticket #, Status, REQ No., Type, Description, Requested for, PIC, Received, Resolved
-- Sorted by Status DESC (OPEN before CLOSE), then Received ASC
+## 👤 Author
 
----
+Tatsuo Goya
 
-### New Users Section (Optional)
-- All records from the `New Users` sheet (no date filtering)
-- Displays: Date, Ticket #, User, Status, Department
-- Appears at the bottom of web view and PDF
-- Only shown if `New Users` sheet exists
+## 🆘 Support
 
----
-
-## Output
-
-### Web Screen
-- Summary
-- Weekly Activity table (Date Range Based)
-- Weekly Workload Details table
-
-### PDF
-- Same content as web screen
-- Business-style layout
-
----
-
-## Error Handling
-
-- Invalid input → 400
-- Excel schema issues → 400
-- No matching data → 400
-- Unexpected error → 500
-
----
-
-## Non-Goals
-
-- Monthly reports
-- Authentication
-- Background processing
-
----
-
-## Status
-
-This repository is under active development.
-The current version targets **Professional Web Dashboard + PDF/Excel output (V2)**.
+For issues or questions, please contact the development team.

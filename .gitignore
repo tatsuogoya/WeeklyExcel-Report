@@ -1,13 +1,56 @@
-# Exclude Data and Output Files (Privacy)
-*.xlsx
-*.xls
-Weekly_Report_*.xlsx
-NA Daily work.xlsx
-
-# Exclude System Files
+# Python
 __pycache__/
-*.pyc
-.venv/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
 venv/
-.idea/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Streamlit
+.streamlit/
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files (exclude sensitive data)
+NA Daily work.xlsx
+*.xlsx
+!SNOW_report_Template.xlsx
+
+# Logs
+*.log
+
+# Pytest
+.pytest_cache/
+
+# Reports
+Weekly_Report_*.xlsx
+Monthly_Report_*.xlsx
+report.pdf
