@@ -490,7 +490,7 @@
 <body>
     <div class="container">
         <div class="header-top">
-            <img src="/static/logo.jpg" alt="Company Logo" class="logo">
+            <img id="companyLogo" src="/static/logo.jpg" alt="Company Logo" class="logo">
             <h1>IFS AMS Workload Summary</h1>
         </div>
         <div style="text-align: right; font-size: 0.9rem; color: var(--text-light); margin-top: -10px;">For NAFTA
@@ -760,6 +760,22 @@
     </div>
 
     <script>
+        const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
+        function apiUrl(path) {
+            return `${API_BASE}${path}`;
+        }
+
+        const companyLogo = document.getElementById('companyLogo');
+        if (window.location.protocol === 'file:') {
+            companyLogo.src = './logo.jpg';
+        }
+        companyLogo.addEventListener('error', () => {
+            if (!companyLogo.dataset.fallbackTried) {
+                companyLogo.dataset.fallbackTried = '1';
+                companyLogo.src = './logo.jpg';
+            }
+        });
+
         const form = document.getElementById('reportForm');
         const genBtn = document.getElementById('genBtn');
         const pdfBtn = document.getElementById('pdfBtn');
@@ -911,7 +927,7 @@
             if (!year || !month) return;
             
             try {
-                const response = await fetch(`/api/sla/${year}/${month}`);
+                const response = await fetch(apiUrl(`/api/sla/${year}/${month}`));
                 if (response.ok) {
                     const data = await response.json();
                     if (data.breaches && data.breaches.length > 0) {
@@ -956,7 +972,7 @@
             
             if (breaches.length > 0) {
                 try {
-                    await fetch(`/api/sla/${year}/${month}`, {
+                    await fetch(apiUrl(`/api/sla/${year}/${month}`), {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ year: parseInt(year), month: parseInt(month), breaches })
@@ -1011,7 +1027,7 @@
 
             // Check SLA data
             try {
-                const slaResponse = await fetch(`/api/sla/${year}/${month}`);
+                const slaResponse = await fetch(apiUrl(`/api/sla/${year}/${month}`));
                 if (slaResponse.ok) {
                     const slaData = await slaResponse.json();
                     hasSlaData = slaData && slaData.breaches && slaData.breaches.length > 0;
@@ -1022,7 +1038,7 @@
 
             // Check Dev Efforts data
             try {
-                const devResponse = await fetch(`/api/dev-efforts/${monthKey}`);
+                const devResponse = await fetch(apiUrl(`/api/dev-efforts/${monthKey}`));
                 if (devResponse.ok) {
                     const devData = await devResponse.json();
                     hasDevData = devData && devData.me_hours !== undefined && devData.me_hours !== null;
@@ -1089,7 +1105,7 @@
             };
             
             try {
-                const response = await fetch('/api/dev-efforts', {
+                const response = await fetch(apiUrl('/api/dev-efforts'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -1113,7 +1129,7 @@
             const monthKey = `${year}-${String(month).padStart(2, '0')}`;
             
             try {
-                const response = await fetch(`/api/dev-efforts/${monthKey}`);
+                const response = await fetch(apiUrl(`/api/dev-efforts/${monthKey}`));
                 if (response.ok) {
                     const data = await response.json();
                     if (data) {
@@ -1196,7 +1212,7 @@
 
             // Check SLA data
             try {
-                const slaResponse = await fetch(`/api/sla/${year}/${month}`);
+                const slaResponse = await fetch(apiUrl(`/api/sla/${year}/${month}`));
                 if (slaResponse.ok) {
                     const slaData = await slaResponse.json();
                     hasSlaData = slaData && slaData.breaches && slaData.breaches.length > 0;
@@ -1207,7 +1223,7 @@
 
             // Check Dev Efforts data
             try {
-                const devResponse = await fetch(`/api/dev-efforts/${monthKey}`);
+                const devResponse = await fetch(apiUrl(`/api/dev-efforts/${monthKey}`));
                 if (devResponse.ok) {
                     const devData = await devResponse.json();
                     hasDevData = devData && devData.me_hours !== undefined && devData.me_hours !== null;
@@ -1255,7 +1271,7 @@
 
             // Check SLA data
             try {
-                const slaResponse = await fetch(`/api/sla/${year}/${month}`);
+                const slaResponse = await fetch(apiUrl(`/api/sla/${year}/${month}`));
                 if (slaResponse.ok) {
                     const slaData = await slaResponse.json();
                     hasSlaData = slaData && slaData.breaches && slaData.breaches.length > 0;
@@ -1266,7 +1282,7 @@
 
             // Check Dev Efforts data
             try {
-                const devResponse = await fetch(`/api/dev-efforts/${monthKey}`);
+                const devResponse = await fetch(apiUrl(`/api/dev-efforts/${monthKey}`));
                 if (devResponse.ok) {
                     const devData = await devResponse.json();
                     hasDevData = devData && devData.me_hours !== undefined && devData.me_hours !== null;
@@ -1312,7 +1328,7 @@
             const formData = new FormData(form);
 
             try {
-                const response = await fetch(endpoint, { method: 'POST', body: formData });
+                const response = await fetch(apiUrl(endpoint), { method: 'POST', body: formData });
                 if (!response.ok) {
                     const err = await response.json();
                     throw new Error(err.detail || err.message || 'Operation failed');
@@ -1658,7 +1674,7 @@
             for (let m = 1; m <= 12; m++) {
                 const monthKey = `${year}-${String(m).padStart(2, '0')}`;
                 try {
-                    const response = await fetch(`/api/dev-efforts/${monthKey}`);
+                    const response = await fetch(apiUrl(`/api/dev-efforts/${monthKey}`));
                     if (response.ok) {
                         const data = await response.json();
                         if (data && data.me_hours !== undefined && data.me_hours !== null) {
